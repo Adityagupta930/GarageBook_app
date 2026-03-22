@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>🔧 GarageBook</title>
+<title>🔧 GarageBook — Dukaan Manager</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#222;min-height:100vh}
@@ -76,13 +76,13 @@ tr:last-child td{border-bottom:none}tr:hover td{background:#fafafa}
 <div id="toast-container"></div>
 
 <header>
-  <h1>🔧 GarageBook — Auto Parts Dukaan</h1>
+  <h1>🔧 GarageBook — Apni Dukaan</h1>
   <nav>
-    <button onclick="showTab('dashboard')" class="active" id="tab-dashboard">📊 Dashboard</button>
-    <button onclick="showTab('inventory')" id="tab-inventory">📦 Inventory</button>
-    <button onclick="showTab('sale')" id="tab-sale">🛒 Bikri</button>
+    <button onclick="showTab('dashboard')" class="active" id="tab-dashboard">🏠 Home</button>
+    <button onclick="showTab('inventory')" id="tab-inventory">📦 Parts List</button>
+    <button onclick="showTab('sale')" id="tab-sale">🛒 Bikri Karo</button>
     <button onclick="showTab('udhaar')" id="tab-udhaar">📋 Udhaar</button>
-    <button onclick="showTab('history')" id="tab-history">🕓 History</button>
+    <button onclick="showTab('history')" id="tab-history">🕓 Purani Bikri</button>
   </nav>
 </header>
 
@@ -91,14 +91,14 @@ tr:last-child td{border-bottom:none}tr:hover td{background:#fafafa}
   <!-- DASHBOARD -->
   <section id="dashboard" class="tab active">
     <div class="cards">
-      <div class="card green"><span>Aaj ki Kamai (Cash+Online)</span><h2 id="d-income">₹0</h2></div>
+      <div class="card green"><span>Aaj ki Kamai (Cash + Online)</span><h2 id="d-income">₹0</h2></div>
       <div class="card blue"><span>Total Udhaar Baaki</span><h2 id="d-udhaar">₹0</h2></div>
-      <div class="card orange"><span>Aaj ki Bikri (items)</span><h2 id="d-count">0</h2></div>
-      <div class="card red"><span>Low Stock Items</span><h2 id="d-lowstock">0</h2></div>
+      <div class="card orange"><span>Aaj Kitne Saman Bika</span><h2 id="d-count">0</h2></div>
+      <div class="card red"><span>Kam Stock Wale Parts</span><h2 id="d-lowstock">0</h2></div>
     </div>
     <div class="section-header">
-      <h3>Aaj ke Transactions</h3>
-      <button class="btn btn-export" onclick="exportCSV()">⬇️ Export CSV</button>
+      <h3>Aaj ki Bikri</h3>
+      <button class="btn btn-export" onclick="exportCSV()">⬇️ Excel mein Download</button>
     </div>
     <table>
       <thead><tr><th>Item</th><th>Qty</th><th>Amount</th><th>Payment</th><th>Customer</th></tr></thead>
@@ -106,19 +106,19 @@ tr:last-child td{border-bottom:none}tr:hover td{background:#fafafa}
     </table>
   </section>
 
-  <!-- INVENTORY -->
+  <!-- PARTS LIST -->
   <section id="inventory" class="tab">
     <div class="form-box">
-      <h3>Naya Item Add Karo</h3>
+      <h3>Naya Part Add Karo</h3>
       <div class="form-row">
-        <input id="i-name" placeholder="Item naam (e.g. Brake Pad)"/>
-        <input id="i-stock" type="number" placeholder="Stock" min="0"/>
-        <input id="i-price" type="number" placeholder="Price (₹)" min="0"/>
-        <button class="btn" onclick="addItem()">➕ Add</button>
+        <input id="i-name" placeholder="Part ka naam (jaise Brake Pad)"/>
+        <input id="i-stock" type="number" placeholder="Kitna hai (ginti)" min="0"/>
+        <input id="i-price" type="number" placeholder="Bikri ka daam (₹)" min="0"/>
+        <button class="btn" onclick="addItem()">➕ Add Karo</button>
       </div>
     </div>
     <table>
-      <thead><tr><th>Item</th><th>Stock</th><th>Price (₹)</th><th>Action</th></tr></thead>
+      <thead><tr><th>Part ka Naam</th><th>Kitna Bacha</th><th>Daam (₹)</th><th>Kaam</th></tr></thead>
       <tbody id="inv-tbody"><tr><td colspan="4" class="loader">Loading...</td></tr></tbody>
     </table>
   </section>
@@ -126,33 +126,33 @@ tr:last-child td{border-bottom:none}tr:hover td{background:#fafafa}
   <!-- SALE -->
   <section id="sale" class="tab">
     <div class="form-box">
-      <h3>Bikri Darj Karo</h3>
+      <h3>Nai Bikri Darj Karo</h3>
       <div class="form-row">
         <select id="s-item" onchange="onItemSelect()">
-          <option value="">-- Item chunno --</option>
+          <option value="">-- Part chunno --</option>
         </select>
-        <input id="s-qty" type="number" placeholder="Qty" min="1" value="1" oninput="calcAmount()"/>
-        <input id="s-price" type="number" placeholder="Unit Price (₹)" readonly/>
-        <input id="s-amount" type="number" placeholder="Total Amount (₹)" min="0"/>
+        <input id="s-qty" type="number" placeholder="Kitna becha" min="1" value="1" oninput="calcAmount()"/>
+        <input id="s-price" type="number" placeholder="Ek ka daam (₹)" readonly/>
+        <input id="s-amount" type="number" placeholder="Kul Rakam (₹)" min="0"/>
       </div>
       <div class="form-row" style="margin-top:8px">
         <select id="s-payment" onchange="toggleCustomer()">
-          <option value="cash">💵 Cash</option>
+          <option value="cash">💵 Nakit (Cash)</option>
           <option value="online">📱 Online</option>
           <option value="udhaar">📋 Udhaar</option>
         </select>
-        <input id="s-customer" placeholder="Customer naam"/>
-        <input id="s-phone" placeholder="Phone (optional)"/>
-        <button class="btn" onclick="recordSale()">✅ Save Bikri</button>
+        <input id="s-customer" placeholder="Grahak ka naam"/>
+        <input id="s-phone" placeholder="Phone number (optional)"/>
+        <button class="btn" onclick="recordSale()">✅ Bikri Save Karo</button>
       </div>
     </div>
   </section>
 
   <!-- UDHAAR -->
   <section id="udhaar" class="tab">
-    <div class="section-header"><h3>📋 Udhaar Bahi (Pending)</h3></div>
+    <div class="section-header"><h3>📋 Udhaar Bahi — Jinke Paise Aane Baaki Hain</h3></div>
     <table>
-      <thead><tr><th>Customer</th><th>Phone</th><th>Total Baaki</th><th>Action</th></tr></thead>
+      <thead><tr><th>Grahak ka Naam</th><th>Phone</th><th>Kitna Baaki</th><th>Kaam</th></tr></thead>
       <tbody id="u-tbody"><tr><td colspan="4" class="loader">Loading...</td></tr></tbody>
     </table>
   </section>
@@ -162,16 +162,16 @@ tr:last-child td{border-bottom:none}tr:hover td{background:#fafafa}
     <div class="form-row" style="margin-bottom:14px">
       <input type="date" id="h-date"/>
       <select id="h-payment">
-        <option value="">Sab Payment</option>
-        <option value="cash">Cash</option>
-        <option value="online">Online</option>
-        <option value="udhaar">Udhaar</option>
+        <option value="">Sab Tarah ki Bikri</option>
+        <option value="cash">Sirf Nakit (Cash)</option>
+        <option value="online">Sirf Online</option>
+        <option value="udhaar">Sirf Udhaar</option>
       </select>
-      <button class="btn" onclick="renderHistory()">🔍 Filter</button>
-      <button class="btn btn-secondary" onclick="clearHistory()">✖ Clear</button>
+      <button class="btn" onclick="renderHistory()">🔍 Dhundo</button>
+      <button class="btn btn-secondary" onclick="clearHistory()">✖ Hatao</button>
     </div>
     <table>
-      <thead><tr><th>Date</th><th>Item</th><th>Qty</th><th>Amount</th><th>Payment</th><th>Customer</th></tr></thead>
+      <thead><tr><th>Tarikh</th><th>Part</th><th>Ginti</th><th>Rakam</th><th>Bhugtan</th><th>Grahak</th></tr></thead>
       <tbody id="h-tbody"><tr><td colspan="6" class="loader">Loading...</td></tr></tbody>
     </table>
   </section>
@@ -183,10 +183,10 @@ tr:last-child td{border-bottom:none}tr:hover td{background:#fafafa}
   <div class="modal-box">
     <h3 id="modal-title"></h3>
     <table>
-      <thead><tr><th>Date</th><th>Item</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+      <thead><tr><th>Tarikh</th><th>Part</th><th>Rakam</th><th>Haal</th><th>Kaam</th></tr></thead>
       <tbody id="modal-tbody"></tbody>
     </table>
-    <button class="btn btn-secondary" style="margin-top:14px" onclick="closeModal()">❌ Band Karo</button>
+    <button class="btn btn-secondary" style="margin-top:14px" onclick="closeModal()">❌ Wapas Jao</button>
   </div>
 </div>
 
@@ -254,11 +254,11 @@ async function renderInventory() {
     : inv.map(item => `
       <tr class="${item.stock <= 3 ? 'low-stock' : ''}" id="row-${item.id}">
         <td>${item.name}</td>
-        <td>${item.stock}${item.stock <= 3 ? ' ⚠️' : ''}</td>
+        <td>${item.stock}${item.stock <= 3 ? ' ⚠️ Kam hai' : ''}</td>
         <td>₹${item.price}</td>
         <td>
-          <button class="btn-sm btn-edit" onclick="startEdit(${item.id},${item.stock},${item.price})">✏️ Edit</button>
-          <button class="btn-sm btn-delete" onclick="deleteItem(${item.id},'${item.name}')">🗑️ Delete</button>
+          <button class="btn-sm btn-edit" onclick="startEdit(${item.id},${item.stock},${item.price})">✏️ Badlo</button>
+          <button class="btn-sm btn-delete" onclick="deleteItem(${item.id},'${item.name}')">🗑️ Hatao</button>
         </td>
       </tr>`).join('');
 }
@@ -269,8 +269,8 @@ function startEdit(id, stock, price) {
   cells[1].innerHTML = `<input class="edit-input" id="e-stock-${id}" value="${stock}" type="number" min="0"/>`;
   cells[2].innerHTML = `<input class="edit-input" id="e-price-${id}" value="${price}" type="number" min="0"/>`;
   cells[3].innerHTML = `
-    <button class="btn-sm btn-save" onclick="saveEdit(${id})">💾 Save</button>
-    <button class="btn-sm btn-cancel" onclick="renderInventory()">✖</button>`;
+    <button class="btn-sm btn-save" onclick="saveEdit(${id})">💾 Save Karo</button>
+    <button class="btn-sm btn-cancel" onclick="renderInventory()">✖ Wapas</button>`;
 }
 
 async function saveEdit(id) {
@@ -310,7 +310,7 @@ function calcAmount() {
 
 function toggleCustomer() {
   const isUdhaar = document.getElementById('s-payment').value === 'udhaar';
-  document.getElementById('s-customer').placeholder = isUdhaar ? 'Customer naam (zaroori!)' : 'Customer naam (optional)';
+  document.getElementById('s-customer').placeholder = isUdhaar ? 'Grahak ka naam (zaroori!)' : 'Grahak ka naam (optional)';
 }
 
 async function recordSale() {
@@ -352,7 +352,7 @@ async function renderUdhaar() {
         <td>${r.customer}</td>
         <td>${r.phone || '-'}</td>
         <td style="color:#e74c3c;font-weight:bold">₹${r.total.toFixed(2)}</td>
-        <td><button class="btn-sm btn-view" onclick="viewUdhaar('${r.customer}','${r.phone}')">👁 Detail</button></td>
+        <td><button class="btn-sm btn-view" onclick="viewUdhaar('${r.customer}','${r.phone}')">👁 Dekho</button></td>
       </tr>`).join('');
 }
 
@@ -366,14 +366,14 @@ async function viewUdhaar(customer, phone) {
       <td>${s.item_name} ×${s.qty}</td>
       <td>₹${s.amount}</td>
       <td><span class="badge ${s.udhaar_paid ? 'badge-paid' : 'badge-udhaar'}">${s.udhaar_paid ? 'Paid' : 'Baaki'}</span></td>
-      <td>${!s.udhaar_paid ? `<button class="btn-sm btn-paid" onclick="markPaid(${s.id},'${customer}','${phone}')">✅ Paid</button>` : ''}</td>
+      <td>${!s.udhaar_paid ? `<button class="btn-sm btn-paid" onclick="markPaid(${s.id},'${customer}','${phone}')">✅ Paise Mil Gaye</button>` : ''}</td>
     </tr>`).join('');
   document.getElementById('modal').classList.remove('hidden');
 }
 
 async function markPaid(id, customer, phone) {
   await api(`/sales/${id}/paid`, 'PUT');
-  toast('Paid mark ho gaya!');
+  toast('Paise mil gaye — mark ho gaya!');
   viewUdhaar(customer, phone);
   renderUdhaar();
 }
@@ -434,7 +434,7 @@ async function renderDashboard() {
 // ── EXPORT CSV ──────────────────────────────────────────────────
 async function exportCSV() {
   const sales = await api('/sales');
-  if (!sales.length) return toast('Koi data nahi export karne ke liye', 'info');
+  if (!sales.length) return toast('Koi bikri nahi abhi tak', 'info');
   const rows = [['Date','Item','Qty','Amount','Payment','Customer','Udhaar Paid']];
   sales.forEach(s => rows.push([localDate(s.date), s.item_name, s.qty, s.amount, s.payment, s.customer, s.udhaar_paid ? 'Yes' : 'No']));
   const csv  = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
