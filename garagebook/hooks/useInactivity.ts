@@ -6,8 +6,8 @@ const WARN_MS  = 25 * 60 * 1000; // 25 min
 const LIMIT_MS = 30 * 60 * 1000; // 30 min
 
 export function useInactivity(onLogout: () => void) {
-  const warnTimer  = useRef<ReturnType<typeof setTimeout>>();
-  const logoutTimer = useRef<ReturnType<typeof setTimeout>>();
+  const warnTimer   = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const logoutTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     function reset() {
