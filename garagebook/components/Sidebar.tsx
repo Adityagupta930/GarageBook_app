@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const links = [
-  { href: '/',          icon: '⊞',  label: 'Dashboard' },
+  { href: '/',          icon: '▦',  label: 'Dashboard' },
   { href: '/inventory', icon: '📦', label: 'Products' },
   { href: '/sale',      icon: '🛒', label: 'New Sale' },
   { href: '/bill',      icon: '🧾', label: 'Bill' },
@@ -18,11 +18,20 @@ export default function Sidebar({ onClose }: Props) {
   const path = usePathname();
   return (
     <aside className="sidebar">
+      {/* Logo */}
       <div className="sidebar-logo">
-        <h1>🔧 GarageBook</h1>
-        <p>Auto Parts Manager</p>
+        <div className="logo-row">
+          <div className="logo-icon">🔧</div>
+          <div>
+            <h1>GarageBook</h1>
+            <p>Auto Parts Manager</p>
+          </div>
+        </div>
       </div>
+
+      {/* Nav */}
       <nav className="sidebar-nav">
+        <div className="sidebar-section-label">Menu</div>
         {links.map(l => (
           <Link key={l.href} href={l.href}
             onClick={onClose}
@@ -32,10 +41,16 @@ export default function Sidebar({ onClose }: Props) {
           </Link>
         ))}
       </nav>
+
+      {/* User footer */}
       <div className="sidebar-footer">
-        <p style={{ fontSize: '11px', color: 'var(--sidebar-t)', textAlign: 'center' }}>
-          GarageBook v2.0
-        </p>
+        <div className="sidebar-user">
+          <div className="sidebar-avatar">A</div>
+          <div className="sidebar-user-info">
+            <p>Admin</p>
+            <span>Shop Owner</span>
+          </div>
+        </div>
       </div>
     </aside>
   );
