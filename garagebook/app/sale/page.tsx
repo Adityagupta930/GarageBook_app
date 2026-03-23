@@ -59,7 +59,6 @@ export default function SalePage() {
       // Reset form
       setItemId(''); setQty('1'); setPrice(''); setAmount('');
       setCustomer(''); setPhone(''); setPayment('cash');
-      // Reload fresh inventory so stock is updated
       await loadInv();
     } finally {
       setSaving(false);
