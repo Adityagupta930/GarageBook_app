@@ -50,6 +50,7 @@ export default function Dashboard() {
 
   const filtered = sales.filter(filterSales);
   const income   = filtered.filter(s => s.payment !== 'udhaar').reduce((a, s) => a + s.amount, 0);
+  const profit   = filtered.reduce((a, s) => a + ((s.amount / s.qty) - s.buy_price) * s.qty, 0);
   const credit   = sales.filter(s => s.payment === 'udhaar' && !s.udhaar_paid).reduce((a, s) => a + s.amount, 0);
   const lowStock = inv.filter(i => i.stock <= 3).length;
 
@@ -69,8 +70,8 @@ export default function Dashboard() {
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatCard label={`${range === 'today' ? 'Aaj ki' : range === 'week' ? 'Week ki' : 'Month ki'} Kamai`} value={fmtCurrency(income)} color="green" />
-        <StatCard label="Total Credit Pending" value={fmtCurrency(credit)} color="blue" />
-        <StatCard label={`${range === 'today' ? 'Aaj ke' : 'Total'} Sales`} value={filtered.length} color="orange" />
+        <StatCard label="Net Profit" value={fmtCurrency(profit)} color="blue" />
+        <StatCard label="Credit Pending" value={fmtCurrency(credit)} color="orange" />
         <StatCard label="Low Stock Parts" value={lowStock} color="red" />
       </div>
 
