@@ -14,7 +14,7 @@ export default function InventoryPage() {
   const [saving, setSaving]   = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true); setError('');
+    setError('');
     try {
       const data = await fetch(`/api/inventory${search ? `?search=${encodeURIComponent(search)}` : ''}`).then(r => r.json());
       setItems(data);
@@ -31,39 +31,50 @@ export default function InventoryPage() {
     const { name, stock, price, buy_price } = form;
     if (!name.trim() || !stock || !price || !buy_price) return toast('Sab fields bharo!', 'error');
     setSaving(true);
-    const res = await fetch('/api/inventory', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name.trim(), stock: +stock, price: +price, buy_price: +buy_price }),
-    });
-    setSaving(false);
-    const data = await res.json();
-    if (!res.ok) return toast(data.error, 'error');
-    toast(`"${name.trim()}" add ho gaya!`);
-    setForm({ name: '', stock: '', price: '', buy_price: '' });
-    load();
+    try {
+      const res = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), stock: +stock, price: +price, buy_price: +buy_price }),
+      });
+      const data = await res.json();
+      if (!res.ok) return toast(data.error, 'error');
+      toast(`"${name.trim()}" add ho gaya!`);
+      setForm({ name: '', stock: '', price: '', buy_price: '' });
+      await load();
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function saveEdit(id: number) {
     const e = editing[id];
-    const res = await fetch(`/api/inventory/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stock: +e.stock, price: +e.price, buy_price: +e.buy_price }),
-    });
-    const data = await res.json();
-    if (!res.ok) return toast(data.error || 'Update failed', 'error');
-    toast('Updated!');
-    setEditing(p => { const n = { ...p }; delete n[id]; return n; });
-    load();
+    try {
+      const res = await fetch(`/api/inventory/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stock: +e.stock, price: +e.price, buy_price: +e.buy_price }),
+      });
+      const data = await res.json();
+      if (!res.ok) return toast(data.error || 'Update failed', 'error');
+      toast('Updated!');
+      setEditing(p => { const n = { ...p }; delete n[id]; return n; });
+      await load();
+    } catch {
+      toast('Update nahi hua', 'error');
+    }
   }
 
   async function deleteItem(id: number, name: string) {
     if (!confirm(`"${name}" delete karo?`)) return;
-    const res = await fetch(`/api/inventory/${id}`, { method: 'DELETE' });
-    if (!res.ok) return toast('Delete nahi hua', 'error');
-    toast(`"${name}" deleted`, 'info');
-    load();
+    try {
+      const res = await fetch(`/api/inventory/${id}`, { method: 'DELETE' });
+      if (!res.ok) return toast('Delete nahi hua', 'error');
+      toast(`"${name}" deleted`, 'info');
+      await load();
+    } catch {
+      toast('Delete nahi hua', 'error');
+    }
   }
 
   return (
