@@ -1,21 +1,16 @@
 interface Props {
   label: string;
   value: string | number;
-  color: 'green' | 'blue' | 'orange' | 'red';
+  color: 'green' | 'blue' | 'orange' | 'red' | 'purple' | 'teal';
+  sub?: string;
 }
 
-const colors = {
-  green:  'bg-green-600',
-  blue:   'bg-blue-600',
-  orange: 'bg-orange-500',
-  red:    'bg-red-600',
-};
-
-export default function StatCard({ label, value, color }: Props) {
+export default function StatCard({ label, value, color, sub }: Props) {
   return (
-    <div className={`${colors[color]} text-white rounded-xl p-5`}>
-      <p className="text-sm opacity-90">{label}</p>
-      <p className="text-3xl font-bold mt-1">{value}</p>
+    <div className={`stat-card ${color}`}>
+      <p className="label">{label}</p>
+      <p className="value">{value}</p>
+      {sub && <p className="sub">{sub}</p>}
     </div>
   );
 }
