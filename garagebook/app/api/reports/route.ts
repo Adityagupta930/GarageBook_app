@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     const profit      = sales.reduce((s, r) => s + ((Number(r.amount) / Number(r.qty)) - Number(r.buy_price)) * Number(r.qty), 0);
     const totalItems  = sales.reduce((s, r) => s + Number(r.qty), 0);
     const pendingRes  = await db.execute('SELECT SUM(amount) as total FROM sales WHERE payment = "udhaar" AND udhaar_paid = 0');
-    const pendingCredit = Number((pendingRes.rows[0] as { total: number | null }).total ?? 0);
+    const pendingCredit = Number(((pendingRes.rows[0] as unknown as { total: number | null }).total) ?? 0);
 
     return apiOk({ totalSales, cashSales, onlineSales, creditSales, profit, totalItems, pendingCredit });
   } catch (e) {

@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     const itemRes = await db.execute({ sql: 'SELECT * FROM inventory WHERE id = ?', args: [item_id] });
     if (!itemRes.rows.length) return apiError('Part nahi mila', 404);
-    const item = itemRes.rows[0] as { id: number; stock: number; buy_price: number };
+    const item = itemRes.rows[0] as unknown as { id: number; stock: number; buy_price: number };
     if (Number(item.stock) < +qty) return apiError(`Sirf ${item.stock} stock bacha hai`);
 
     const result = await db.batch([
