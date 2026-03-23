@@ -17,13 +17,13 @@ export async function PUT(req: NextRequest, { params }: Params) {
       return apiOk(r.rows[0]);
     }
 
-    const { stock, price, buy_price, company } = body;
+    const { stock, price, buy_price, company, sku, category } = body;
     if (stock == null || isNaN(+stock)) return apiError('Valid stock daalo');
     if (price == null || isNaN(+price)) return apiError('Valid price daalo');
 
     const info = await db.execute({
-      sql: 'UPDATE inventory SET stock = ?, price = ?, buy_price = ?, company = ? WHERE id = ?',
-      args: [+stock, +price, buy_price != null ? +buy_price : 0, company?.trim() ?? '', id],
+      sql: 'UPDATE inventory SET stock = ?, price = ?, buy_price = ?, company = ?, sku = ?, category = ? WHERE id = ?',
+      args: [+stock, +price, buy_price != null ? +buy_price : 0, company?.trim() ?? '', sku?.trim() ?? '', category?.trim() ?? '', id],
     });
     if (info.rowsAffected === 0) return apiError('Part nahi mila', 404);
     return apiOk({ success: true });
