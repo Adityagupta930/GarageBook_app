@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import StatCard from '@/components/StatCard';
 import { LoadingRows, ErrorRow, EmptyRow } from '@/components/TableStates';
 import { toast } from '@/components/Toast';
+import { Sparkline } from '@/components/Charts';
 import { fmtDate, fmtCurrency, todayStr } from '@/lib/utils';
 import type { Sale, InventoryItem } from '@/types';
 
@@ -55,6 +56,13 @@ export default function Dashboard() {
   const lowStock  = inv.filter(i => Number(i.stock) > 0 && Number(i.stock) <= 3).length;
   const outStock  = inv.filter(i => Number(i.stock) === 0).length;
 
+  // Last 7 days sparkline data
+  const last7 = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (6 - i));
+    const key = d.toLocaleDateString('en-CA');
+    return sales.filter(s => s.date.startsWith(key) && s.payment !== 'udhaar').reduce((a, s) => a + Number(s.amount), 0);
+  });
+
   function exportCSV() {
     if (!sales.length) return toast('Koi data nahi', 'info');
     const rows = [['Date', 'Part', 'Qty', 'Amount', 'Payment', 'Customer', 'Paid']];
@@ -71,8 +79,10 @@ export default function Dashboard() {
     <div>
       {/* Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        <StatCard label="Revenue" value={fmtCurrency(income)} color="green" sub={range === 'today' ? 'Today' : range === 'week' ? 'Last 7 days' : 'Last 30 days'} icon="💰" />
-        <StatCard label="Net Profit" value={fmtCurrency(profit)} color="blue" sub="After cost price" icon="📈" />
+        <StatCard label="Revenue" value={fmtCurrency(income)} color="green" sub={range === 'today' ? 'Today' : range === 'week' ? 'Last 7 days' : 'Last 30 days'} icon="💰"
+          sparkline={<Sparkline data={last7} color="#22c55e" />} />
+        <StatCard label="Net Profit" value={fmtCurrency(profit)} color="blue" sub="After cost price" icon="📈"
+          sparkline={<Sparkline data={last7.map(v => v * 0.3)} color="#3b82f6" />} />
         <StatCard label="Credit Pending" value={fmtCurrency(credit)} color="orange" sub="Unpaid udhaar" icon="📋" />
         <StatCard label="Low Stock" value={lowStock} color="red" sub={outStock > 0 ? `${outStock} out of stock` : 'Items ≤ 3'} icon="⚠️" />
         <StatCard label="Total Sales" value={filtered.length} color="purple" sub="Transactions" icon="🛒" />

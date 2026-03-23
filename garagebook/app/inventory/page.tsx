@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from '@/components/Toast';
 import { LoadingRows, ErrorRow, EmptyRow } from '@/components/TableStates';
+import ConfirmModal from '@/components/ConfirmModal';
 import type { InventoryItem } from '@/types';
 
 type EditState = { stock: string; price: string; buy_price: string; company: string; sku: string; category: string };
@@ -15,6 +16,7 @@ export default function InventoryPage() {
   const [search, setSearch]     = useState('');
   const [catFilter, setCatFilter] = useState('');
   const [saving, setSaving]     = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: number; name: string } | null>(null);
 
   const load = useCallback(async () => {
     setError('');
@@ -73,10 +75,14 @@ export default function InventoryPage() {
   }
 
   async function deleteItem(id: number, name: string) {
-    if (!confirm(`"${name}" delete karo?`)) return;
+    setConfirmDelete({ id, name });
+  }
+
+  async function doDelete(id: number, name: string) {
     const res = await fetch(`/api/inventory/${id}`, { method: 'DELETE' });
     if (!res.ok) return toast('Delete nahi hua', 'error');
     toast(`"${name}" deleted`, 'info');
+    setConfirmDelete(null);
     await load();
   }
 
@@ -177,6 +183,14 @@ export default function InventoryPage() {
           </tbody>
         </table>
       </div>
+
+      {confirmDelete && (
+        <ConfirmModal
+          message={`"${confirmDelete.name}" permanently delete karo?`}
+          onConfirm={() => doDelete(confirmDelete.id, confirmDelete.name)}
+          onCancel={() => setConfirmDelete(null)}
+        />
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { LoadingRows, ErrorRow, EmptyRow } from '@/components/TableStates';
 import { fmtDate, fmtCurrency } from '@/lib/utils';
 import type { Customer, Return, ReportSummary, DailyReport, TopPart } from '@/types';
 import { DailyBarChart, TopPartsChart } from '@/components/Charts';
+import ConfirmModal from '@/components/ConfirmModal';
 
 type Tab = 'reports' | 'customers' | 'returns';
 
@@ -20,6 +21,7 @@ export default function AdminPage() {
   const [sLoading, setSLoading]   = useState(false);
   const [cForm, setCForm]         = useState({ name: '', phone: '', address: '' });
   const [rForm, setRForm]         = useState({ item_name: '', qty: '', amount: '', reason: '' });
+  const [confirmCust, setConfirmCust] = useState<{ id: number; name: string } | null>(null);
 
   const loadCustomers = useCallback(async () => {
     setCLoading(true);
@@ -68,10 +70,14 @@ export default function AdminPage() {
   }
 
   async function deleteCustomer(id: number, name: string) {
-    if (!confirm(`"${name}" delete karo?`)) return;
+    setConfirmCust({ id, name });
+  }
+
+  async function doDeleteCustomer(id: number, name: string) {
     const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
     if (!res.ok) return toast('Delete nahi hua', 'error');
     toast(`${name} deleted`, 'info');
+    setConfirmCust(null);
     await loadCustomers();
   }
 
@@ -182,6 +188,14 @@ export default function AdminPage() {
               ))}
             </tbody>
           </table>
+
+          {confirmCust && (
+            <ConfirmModal
+              message={`"${confirmCust.name}" permanently delete karo?`}
+              onConfirm={() => doDeleteCustomer(confirmCust.id, confirmCust.name)}
+              onCancel={() => setConfirmCust(null)}
+            />
+          )}
         </div>
       )}
 

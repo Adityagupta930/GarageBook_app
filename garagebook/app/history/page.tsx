@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { LoadingRows, ErrorRow, EmptyRow } from '@/components/TableStates';
 import { toast } from '@/components/Toast';
+import ConfirmModal from '@/components/ConfirmModal';
 import { fmtDate, fmtCurrency } from '@/lib/utils';
 import type { Sale } from '@/types';
 
@@ -11,6 +12,7 @@ export default function HistoryPage() {
   const [payment, setPayment] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
+  const [confirmId, setConfirmId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError('');
@@ -34,10 +36,14 @@ export default function HistoryPage() {
   }, [load]);
 
   async function deleteSale(id: number) {
-    if (!confirm('Ye sale delete karo?')) return;
+    setConfirmId(id);
+  }
+
+  async function doDelete(id: number) {
     const res = await fetch(`/api/sales/${id}`, { method: 'DELETE' });
     if (!res.ok) return toast('Delete nahi hua', 'error');
     toast('Sale deleted', 'info');
+    setConfirmId(null);
     await load();
   }
 
@@ -83,6 +89,14 @@ export default function HistoryPage() {
           ))}
         </tbody>
       </table>
+
+      {confirmId !== null && (
+        <ConfirmModal
+          message="Ye sale permanently delete karo?"
+          onConfirm={() => doDelete(confirmId)}
+          onCancel={() => setConfirmId(null)}
+        />
+      )}
     </div>
   );
 }
