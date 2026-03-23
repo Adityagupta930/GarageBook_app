@@ -1,12 +1,10 @@
-export function LoadingRows({ cols }: { cols: number }) {
+export function LoadingRows({ cols, rows = 5 }: { cols: number; rows?: number }) {
   return (
     <>
-      {[1, 2, 3].map(i => (
+      {Array.from({ length: rows }).map((_, i) => (
         <tr key={i}>
           {Array.from({ length: cols }).map((_, j) => (
-            <td key={j}>
-              <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
-            </td>
+            <td key={j}><div className="skeleton" style={{ height: '14px', borderRadius: '4px', width: j === 0 ? '60%' : '80%' }} /></td>
           ))}
         </tr>
       ))}
@@ -17,7 +15,7 @@ export function LoadingRows({ cols }: { cols: number }) {
 export function ErrorRow({ cols, msg }: { cols: number; msg: string }) {
   return (
     <tr>
-      <td colSpan={cols} className="text-center text-red-500 py-5 text-sm">
+      <td colSpan={cols} style={{ textAlign: 'center', padding: '32px', color: '#ef4444', fontSize: '13px' }}>
         ⚠️ {msg}
       </td>
     </tr>
@@ -27,7 +25,7 @@ export function ErrorRow({ cols, msg }: { cols: number; msg: string }) {
 export function EmptyRow({ cols, msg }: { cols: number; msg: string }) {
   return (
     <tr>
-      <td colSpan={cols} className="text-center text-gray-400 py-8 text-sm">
+      <td colSpan={cols} style={{ textAlign: 'center', padding: '40px', color: 'var(--text3)', fontSize: '13px' }}>
         {msg}
       </td>
     </tr>
