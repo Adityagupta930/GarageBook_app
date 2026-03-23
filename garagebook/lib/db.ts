@@ -4,17 +4,12 @@ import path from 'path';
 declare global { var _db: Client | undefined; }
 
 function makeClient(): Client {
-  // Local dev: use file-based SQLite (no credentials needed)
   if (process.env.NODE_ENV !== 'production') {
     return createClient({ url: `file:${path.join(process.cwd(), 'garagebook.db')}` });
   }
-  // Production: use Turso
   if (!process.env.TURSO_DATABASE_URL) throw new Error('TURSO_DATABASE_URL missing');
   if (!process.env.TURSO_AUTH_TOKEN)   throw new Error('TURSO_AUTH_TOKEN missing');
-  return createClient({
-    url:       process.env.TURSO_DATABASE_URL,
-    authToken: process.env.TURSO_AUTH_TOKEN,
-  });
+  return createClient({ url: process.env.TURSO_DATABASE_URL, authToken: process.env.TURSO_AUTH_TOKEN });
 }
 
 const db: Client = global._db ?? makeClient();
@@ -25,6 +20,8 @@ export async function initDb() {
     CREATE TABLE IF NOT EXISTS inventory (
       id         INTEGER PRIMARY KEY AUTOINCREMENT,
       name       TEXT    NOT NULL UNIQUE,
+      sku        TEXT    DEFAULT '',
+      category   TEXT    DEFAULT '',
       stock      INTEGER NOT NULL DEFAULT 0,
       price      REAL    NOT NULL DEFAULT 0,
       buy_price  REAL    NOT NULL DEFAULT 0,
@@ -62,9 +59,15 @@ export async function initDb() {
       date      TEXT    DEFAULT (datetime('now','localtime'))
     );
   `);
-  try {
-    await db.execute("ALTER TABLE inventory ADD COLUMN company TEXT NOT NULL DEFAULT ''");
-  } catch { /* already exists */ }
+  // Safe migrations
+  const migrations = [
+    "ALTER TABLE inventory ADD COLUMN company  TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE inventory ADD COLUMN sku      TEXT DEFAULT ''",
+    "ALTER TABLE inventory ADD COLUMN category TEXT DEFAULT ''",
+  ];
+  for (const sql of migrations) {
+    try { await db.execute(sql); } catch { /* column already exists */ }
+  }
 }
 
 export default db;

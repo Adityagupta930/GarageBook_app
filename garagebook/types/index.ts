@@ -1,6 +1,8 @@
 export interface InventoryItem {
   id: number;
   name: string;
+  sku: string;
+  category: string;
   stock: number;
   price: number;
   buy_price: number;
@@ -49,4 +51,18 @@ export interface ReportSummary {
   profit: number | null;
   totalItems: number | null;
   pendingCredit: number | null;
+}
+
+export interface DailyReport {
+  day: string;
+  total: number;
+  earned: number;
+  profit: number;
+  count: number;
+}
+
+export interface TopPart {
+  item_name: string;
+  total_qty: number;
+  total_amount: number;
 }
