@@ -1,12 +1,24 @@
-import { createClient } from '@libsql/client';
+import { createClient, type Client } from '@libsql/client';
+import path from 'path';
 
-if (!process.env.TURSO_DATABASE_URL) throw new Error('TURSO_DATABASE_URL missing');
-if (!process.env.TURSO_AUTH_TOKEN)   throw new Error('TURSO_AUTH_TOKEN missing');
+declare global { var _db: Client | undefined; }
 
-const db = createClient({
-  url:       process.env.TURSO_DATABASE_URL,
-  authToken: process.env.TURSO_AUTH_TOKEN,
-});
+function makeClient(): Client {
+  // Local dev: use file-based SQLite (no credentials needed)
+  if (process.env.NODE_ENV !== 'production') {
+    return createClient({ url: `file:${path.join(process.cwd(), 'garagebook.db')}` });
+  }
+  // Production: use Turso
+  if (!process.env.TURSO_DATABASE_URL) throw new Error('TURSO_DATABASE_URL missing');
+  if (!process.env.TURSO_AUTH_TOKEN)   throw new Error('TURSO_AUTH_TOKEN missing');
+  return createClient({
+    url:       process.env.TURSO_DATABASE_URL,
+    authToken: process.env.TURSO_AUTH_TOKEN,
+  });
+}
+
+const db: Client = global._db ?? makeClient();
+if (process.env.NODE_ENV !== 'production') global._db = db;
 
 export async function initDb() {
   await db.executeMultiple(`
@@ -50,7 +62,6 @@ export async function initDb() {
       date      TEXT    DEFAULT (datetime('now','localtime'))
     );
   `);
-  // Migration: add company column if not exists
   try {
     await db.execute("ALTER TABLE inventory ADD COLUMN company TEXT NOT NULL DEFAULT ''");
   } catch { /* already exists */ }
