@@ -1,13 +1,39 @@
 # OS
 .DS_Store
+.DS_Store?
+._*
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
 # Editor
 .vscode/
 .idea/
+*.suo
+*.user
+*.swp
+*.swo
+*~
 
 # Logs
 *.log
+npm-debug.log*
 
 # Node
 node_modules/
+package-lock.json
+
+# Build / Output
+dist/
+build/
+out/
+
+# Env
+.env
+.env.local
+.env.*
+
+# Misc
+*.bak
+*.tmp
+*.zip
