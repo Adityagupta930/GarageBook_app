@@ -40,8 +40,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# SQLite DB — backup regularly via CSV export
-# garagebook.db  ← uncomment to exclude from git
+# SQLite DB files
+garagebook.db
+garagebook.db-shm
+garagebook.db-wal
 
 # Agents
 AGENTS.md
