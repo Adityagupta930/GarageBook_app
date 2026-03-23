@@ -1,69 +1,59 @@
-import Database from 'better-sqlite3';
-import path from 'path';
+import { createClient } from '@libsql/client';
 
-// Use __dirname-equivalent for reliable path in Next.js
-const DB_PATH = path.join(process.cwd(), 'garagebook.db');
+if (!process.env.TURSO_DATABASE_URL) throw new Error('TURSO_DATABASE_URL missing');
+if (!process.env.TURSO_AUTH_TOKEN)   throw new Error('TURSO_AUTH_TOKEN missing');
 
-declare global { var _db: Database.Database | undefined; }
+const db = createClient({
+  url:       process.env.TURSO_DATABASE_URL,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
-const db: Database.Database = global._db ?? new Database(DB_PATH);
-
-// Persist across hot reloads in dev only
-if (process.env.NODE_ENV !== 'production') global._db = db;
-
-// WAL mode for better concurrent read performance
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-
-// Migration — add company column if not exists (safe to run multiple times)
-const invCols = db.prepare('PRAGMA table_info(inventory)').all() as { name: string }[];
-if (!invCols.find(c => c.name === 'company')) {
-  db.prepare("ALTER TABLE inventory ADD COLUMN company TEXT NOT NULL DEFAULT ''").run();
+export async function initDb() {
+  await db.executeMultiple(`
+    CREATE TABLE IF NOT EXISTS inventory (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      name       TEXT    NOT NULL UNIQUE,
+      stock      INTEGER NOT NULL DEFAULT 0,
+      price      REAL    NOT NULL DEFAULT 0,
+      buy_price  REAL    NOT NULL DEFAULT 0,
+      company    TEXT    NOT NULL DEFAULT '',
+      created_at TEXT    DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS customers (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      name       TEXT NOT NULL,
+      phone      TEXT DEFAULT '',
+      address    TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS sales (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      item_id     INTEGER REFERENCES inventory(id) ON DELETE SET NULL,
+      item_name   TEXT    NOT NULL,
+      qty         INTEGER NOT NULL,
+      amount      REAL    NOT NULL,
+      buy_price   REAL    NOT NULL DEFAULT 0,
+      payment     TEXT    NOT NULL CHECK(payment IN ('cash','online','udhaar')),
+      customer    TEXT    DEFAULT 'Walk-in',
+      phone       TEXT    DEFAULT '',
+      date        TEXT    DEFAULT (datetime('now','localtime')),
+      udhaar_paid INTEGER DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS returns (
+      id        INTEGER PRIMARY KEY AUTOINCREMENT,
+      sale_id   INTEGER REFERENCES sales(id) ON DELETE SET NULL,
+      item_id   INTEGER REFERENCES inventory(id) ON DELETE SET NULL,
+      item_name TEXT    NOT NULL,
+      qty       INTEGER NOT NULL,
+      amount    REAL    NOT NULL,
+      reason    TEXT    DEFAULT '',
+      date      TEXT    DEFAULT (datetime('now','localtime'))
+    );
+  `);
+  // Migration: add company column if not exists
+  try {
+    await db.execute("ALTER TABLE inventory ADD COLUMN company TEXT NOT NULL DEFAULT ''");
+  } catch { /* already exists */ }
 }
-
-db.exec(`
-  CREATE TABLE IF NOT EXISTS inventory (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    name       TEXT    NOT NULL UNIQUE,
-    stock      INTEGER NOT NULL DEFAULT 0,
-    price      REAL    NOT NULL DEFAULT 0,
-    buy_price  REAL    NOT NULL DEFAULT 0,
-    company    TEXT    NOT NULL DEFAULT '',
-    created_at TEXT    DEFAULT (datetime('now','localtime'))
-  );
-
-  CREATE TABLE IF NOT EXISTS customers (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    name       TEXT NOT NULL,
-    phone      TEXT DEFAULT '',
-    address    TEXT DEFAULT '',
-    created_at TEXT DEFAULT (datetime('now','localtime'))
-  );
-
-  CREATE TABLE IF NOT EXISTS sales (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    item_id     INTEGER REFERENCES inventory(id) ON DELETE SET NULL,
-    item_name   TEXT    NOT NULL,
-    qty         INTEGER NOT NULL,
-    amount      REAL    NOT NULL,
-    buy_price   REAL    NOT NULL DEFAULT 0,
-    payment     TEXT    NOT NULL CHECK(payment IN ('cash','online','udhaar')),
-    customer    TEXT    DEFAULT 'Walk-in',
-    phone       TEXT    DEFAULT '',
-    date        TEXT    DEFAULT (datetime('now','localtime')),
-    udhaar_paid INTEGER DEFAULT 0
-  );
-
-  CREATE TABLE IF NOT EXISTS returns (
-    id        INTEGER PRIMARY KEY AUTOINCREMENT,
-    sale_id   INTEGER REFERENCES sales(id) ON DELETE SET NULL,
-    item_id   INTEGER REFERENCES inventory(id) ON DELETE SET NULL,
-    item_name TEXT    NOT NULL,
-    qty       INTEGER NOT NULL,
-    amount    REAL    NOT NULL,
-    reason    TEXT    DEFAULT '',
-    date      TEXT    DEFAULT (datetime('now','localtime'))
-  );
-`);
 
 export default db;
