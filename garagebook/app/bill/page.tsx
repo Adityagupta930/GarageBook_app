@@ -121,6 +121,35 @@ export default function BillPage() {
     }
   }
 
+  function sendWhatsApp() {
+    if (!items.length) return toast('Bill mein koi item nahi!', 'error');
+    const num = phone.trim().replace(/\D/g, '');
+    if (!num) return toast('Customer ka phone number daalo!', 'error');
+
+    const lines = items.map(i => `  • ${i.item_name} ×${i.qty} = ₹${(i.qty * i.price).toFixed(2)}`).join('\n');
+    const discLine = discountAmt > 0 ? `\nDiscount: -₹${discountAmt.toFixed(2)}` : '';
+    const payLabel = payment === 'cash' ? '💵 Cash' : payment === 'online' ? '📱 Online' : '📋 Credit (Udhaar)';
+
+    const msg = [
+      `🔧 *${shopName}*`,
+      `📅 Date: ${fmtDate(new Date().toISOString())}`,
+      customer.trim() ? `👤 Customer: ${customer.trim()}` : '',
+      '',
+      '*Bill Details:*',
+      lines,
+      discLine,
+      `━━━━━━━━━━━━━━`,
+      `*Total: ₹${total.toFixed(2)}*`,
+      `Payment: ${payLabel}`,
+      '',
+      '_Thank you for your business! 🙏_',
+    ].filter(Boolean).join('\n');
+
+    // India number: add 91 prefix if not present
+    const intlNum = num.startsWith('91') ? num : `91${num}`;
+    window.open(`https://wa.me/${intlNum}?text=${encodeURIComponent(msg)}`, '_blank');
+  }
+
   function printBill() {
     if (!items.length) return toast('Bill mein koi item nahi!', 'error');
     const win = window.open('', '_blank');
