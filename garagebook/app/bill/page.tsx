@@ -7,6 +7,8 @@ import type { InventoryItem } from '@/types';
 
 interface BillItem { item_id: number; item_name: string; qty: number; price: number; }
 
+const EMAIL_KEY = 'gb_last_email';
+
 const SHOP_KEY = 'gb_shop_name';
 
 export default function BillPage() {
@@ -20,6 +22,8 @@ export default function BillPage() {
   const [discount, setDiscount] = useState('0');
   const [shopName, setShopName] = useState('GarageBook Auto Parts');
   const [saving, setSaving]     = useState(false);
+  const [emailTo, setEmailTo]   = useState('');
+  const [sending, setSending]   = useState(false);
 
   const loadInv = useCallback(async () => {
     const data: InventoryItem[] = await fetch('/api/inventory').then(r => r.json());
@@ -30,6 +34,8 @@ export default function BillPage() {
     loadInv();
     const saved = localStorage.getItem(SHOP_KEY);
     if (saved) setShopName(saved);
+    const lastEmail = localStorage.getItem(EMAIL_KEY);
+    if (lastEmail) setEmailTo(lastEmail);
   }, [loadInv]);
 
   function onShopNameChange(val: string) {
@@ -83,6 +89,35 @@ export default function BillPage() {
       toast(e instanceof Error ? e.message : 'Bill save nahi hua', 'error');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function sendEmail() {
+    if (!items.length) return toast('Bill mein koi item nahi!', 'error');
+    if (!emailTo.trim() || !emailTo.includes('@')) return toast('Valid email daalo!', 'error');
+    setSending(true);
+    try {
+      localStorage.setItem(EMAIL_KEY, emailTo.trim());
+      const res = await fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: emailTo.trim(),
+          customerName: customer.trim() || 'Walk-in',
+          shopName,
+          items,
+          subtotal,
+          discount: discountAmt,
+          total,
+          payment,
+          date: fmtDate(new Date().toISOString()),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) return toast(data.error || 'Email nahi gaya', 'error');
+      toast(`✉️ Bill ${emailTo} pe bhej diya!`);
+    } finally {
+      setSending(false);
     }
   }
 
@@ -206,6 +241,27 @@ export default function BillPage() {
             </button>
             <button className="btn-green" onClick={printBill}>🖨️ Print Bill</button>
             <button className="btn-gray" onClick={() => { setItems([]); setDiscount('0'); }}>🗑️ Clear</button>
+          </div>
+
+          {/* Email Bill */}
+          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '8px' }}>
+              ✉️ Email Bill to Customer
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <input
+                className="gb-input"
+                type="email"
+                placeholder="customer@email.com"
+                value={emailTo}
+                onChange={e => setEmailTo(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && sendEmail()}
+                style={{ flex: 1, minWidth: '200px' }}
+              />
+              <button className="btn-blue" onClick={sendEmail} disabled={sending || !items.length}>
+                {sending ? '⏳ Sending...' : '✉️ Send Email'}
+              </button>
+            </div>
           </div>
         </div>
       )}
