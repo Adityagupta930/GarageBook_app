@@ -5,6 +5,7 @@ import { LoadingRows, ErrorRow, EmptyRow } from '@/components/TableStates';
 import { toast } from '@/components/Toast';
 import { Sparkline } from '@/components/Charts';
 import { fmtDate, fmtCurrency, todayStr } from '@/lib/utils';
+import { listenSync } from '@/lib/sync';
 import { useRole } from '@/hooks/useRole';
 import type { Sale, InventoryItem } from '@/types';
 
@@ -38,7 +39,8 @@ export default function Dashboard() {
     load();
     const onVisible = () => { if (document.visibilityState === 'visible') load(); };
     document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
+    const unsync = listenSync(['sales', 'inventory'], load);
+    return () => { document.removeEventListener('visibilitychange', onVisible); unsync(); };
   }, [load]);
 
   const today = todayStr();
