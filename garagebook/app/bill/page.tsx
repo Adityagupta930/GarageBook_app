@@ -38,6 +38,19 @@ export default function BillPage() {
     const lastEmail = localStorage.getItem(EMAIL_KEY);
     if (lastEmail) setEmailTo(lastEmail);
     const unsync = listenSync(['inventory'], loadInv);
+    // Load pending bill from sale page
+    try {
+      const pending = sessionStorage.getItem('gb_pending_bill');
+      if (pending) {
+        const b = JSON.parse(pending);
+        if (b.items?.length)  setItems(b.items);
+        if (b.customer)       setCustomer(b.customer);
+        if (b.phone)          setPhone(b.phone);
+        if (b.payment)        setPayment(b.payment);
+        if (b.discount)       setDiscount(String(b.discount));
+        sessionStorage.removeItem('gb_pending_bill');
+      }
+    } catch {}
     return unsync;
   }, [loadInv]);
 

@@ -263,6 +263,12 @@ export default function SalePage() {
         <button className="btn w-full mt-1" onClick={recordSale} disabled={saving || !itemId}>
           {saving ? '⏳ Saving...' : '✅ Sale Save Karo (Ctrl+Enter)'}
         </button>
+        {lastBill && (
+          <a href="/bill"
+            style={{ display: 'block', textAlign: 'center', padding: '8px 16px', borderRadius: '7px', fontSize: '13px', fontWeight: 600, background: '#16a34a', color: '#fff', marginTop: '6px', textDecoration: 'none' }}>
+            🧾 Bill Banao / Print / Share
+          </a>
+        )}
       </div>
     </div>
   );
