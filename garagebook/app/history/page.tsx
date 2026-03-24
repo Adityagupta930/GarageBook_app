@@ -4,6 +4,7 @@ import { LoadingRows, ErrorRow, EmptyRow } from '@/components/TableStates';
 import { toast } from '@/components/Toast';
 import ConfirmModal from '@/components/ConfirmModal';
 import { fmtDate, fmtCurrency } from '@/lib/utils';
+import { listenSync, broadcast } from '@/lib/sync';
 import type { Sale } from '@/types';
 
 export default function HistoryPage() {
@@ -32,7 +33,8 @@ export default function HistoryPage() {
     load();
     const onVisible = () => { if (document.visibilityState === 'visible') load(); };
     document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
+    const unsync = listenSync(['sales'], load);
+    return () => { document.removeEventListener('visibilitychange', onVisible); unsync(); };
   }, [load]);
 
   async function deleteSale(id: number) {
@@ -43,6 +45,7 @@ export default function HistoryPage() {
     const res = await fetch(`/api/sales/${id}`, { method: 'DELETE' });
     if (!res.ok) return toast('Delete nahi hua', 'error');
     toast('Sale deleted', 'info');
+    broadcast('sales');
     setConfirmId(null);
     await load();
   }
