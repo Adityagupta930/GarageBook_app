@@ -23,6 +23,7 @@ export default function SalePage() {
   const [itemId, setItemId]     = useState('');
   const [qty, setQty]           = useState('1');
   const [price, setPrice]       = useState('');
+  const [customPrice, setCustomPrice] = useState(false);
   const [discount, setDiscount] = useState('0');
   const [payment, setPayment]   = useState<'cash' | 'online' | 'udhaar'>('cash');
   const [customer, setCustomer] = useState('');
@@ -64,12 +65,13 @@ export default function SalePage() {
     setPrice(String(item.price));
     setSearch(item.name);
     setDiscount('0');
+    setCustomPrice(false);
     setShowDrop(false);
   }
 
   function reset() {
     setItemId(''); setQty('1'); setPrice(''); setDiscount('0');
-    setCustomer(''); setPhone(''); setPayment('cash'); setSearch('');
+    setCustomer(''); setPhone(''); setPayment('cash'); setSearch(''); setCustomPrice(false);
   }
 
   async function recordSale() {
@@ -201,9 +203,32 @@ export default function SalePage() {
             onChange={e => setQty(e.target.value)} />
         </div>
         <div className="flex flex-col gap-1 flex-1 min-w-28">
-          <label className="text-xs text-gray-500">Unit Price ₹</label>
-          <input className="gb-input" type="number" value={price} readOnly
-            style={{ background: 'var(--surface2)' }} />
+          <label className="text-xs text-gray-500" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>Unit Price ₹ {selectedItem && !customPrice && <span style={{ color: 'var(--text3)' }}>(MRP: ₹{selectedItem.price})</span>}</span>
+            {selectedItem && (
+              <button
+                type="button"
+                onClick={() => setCustomPrice(p => !p)}
+                style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '20px', border: '1px solid var(--border)', background: customPrice ? 'var(--primary)' : 'var(--surface2)', color: customPrice ? '#fff' : 'var(--text2)', cursor: 'pointer', fontWeight: 600 }}>
+                {customPrice ? '✏️ Custom' : '✏️ Edit'}
+              </button>
+            )}
+          </label>
+          <input
+            className="gb-input"
+            type="number"
+            min="0"
+            value={price}
+            readOnly={!customPrice}
+            onChange={e => setPrice(e.target.value)}
+            style={customPrice
+              ? { borderColor: 'var(--primary)', boxShadow: '0 0 0 3px var(--primary-s)' }
+              : { background: 'var(--surface2)' }
+            }
+          />
+          {customPrice && selectedItem && +price < selectedItem.buy_price && (
+            <span style={{ fontSize: '10px', color: '#dc2626', marginTop: '2px' }}>⚠️ Buy price se kam!</span>
+          )}
         </div>
         <div className="flex flex-col gap-1 w-28">
           <label className="text-xs text-gray-500">Discount ₹</label>
