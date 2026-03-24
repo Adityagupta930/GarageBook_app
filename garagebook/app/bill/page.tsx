@@ -272,24 +272,50 @@ export default function BillPage() {
             <button className="btn-gray" onClick={() => { setItems([]); setDiscount('0'); }}>🗑️ Clear</button>
           </div>
 
-          {/* Email Bill */}
+          {/* Send Options: WhatsApp + Email */}
           <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '8px' }}>
-              ✉️ Email Bill to Customer
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '10px' }}>
+              📤 Bill Share Karo
             </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <input
-                className="gb-input"
-                type="email"
-                placeholder="customer@email.com"
-                value={emailTo}
-                onChange={e => setEmailTo(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && sendEmail()}
-                style={{ flex: 1, minWidth: '200px' }}
-              />
-              <button className="btn-blue" onClick={sendEmail} disabled={sending || !items.length}>
-                {sending ? '⏳ Sending...' : '✉️ Send Email'}
-              </button>
+
+            {/* WhatsApp */}
+            <div style={{ marginBottom: '10px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text2)', marginBottom: '6px' }}>📱 WhatsApp pe bhejo</div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <input
+                  className="gb-input"
+                  type="tel"
+                  placeholder="Customer phone (e.g. 9876543210)"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  style={{ flex: 1, minWidth: '200px' }}
+                />
+                <button
+                  onClick={sendWhatsApp}
+                  disabled={!items.length}
+                  style={{ padding: '8px 16px', background: '#25d366', color: '#fff', border: 'none', borderRadius: '7px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', opacity: !items.length ? .5 : 1 }}>
+                  💬 WhatsApp
+                </button>
+              </div>
+            </div>
+
+            {/* Email */}
+            <div>
+              <div style={{ fontSize: '12px', color: 'var(--text2)', marginBottom: '6px' }}>✉️ Email pe bhejo</div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <input
+                  className="gb-input"
+                  type="email"
+                  placeholder="customer@email.com"
+                  value={emailTo}
+                  onChange={e => setEmailTo(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && sendEmail()}
+                  style={{ flex: 1, minWidth: '200px' }}
+                />
+                <button className="btn-blue" onClick={sendEmail} disabled={sending || !items.length}>
+                  {sending ? '⏳ Sending...' : '✉️ Send Email'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
