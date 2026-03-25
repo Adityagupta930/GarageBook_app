@@ -21,7 +21,7 @@ export default function BillPage() {
   const [phone, setPhone]       = useState('');
   const [payment, setPayment]   = useState<'cash' | 'online' | 'udhaar'>('cash');
   const [discount, setDiscount] = useState('0');
-  const [shopName, setShopName] = useState('GarageBook Auto Parts');
+  const [shopName, setShopName] = useState('Porwal Autoparts');
   const [saving, setSaving]       = useState(false);
   const [emailTo, setEmailTo]     = useState('');
   const [sending, setSending]     = useState(false);
