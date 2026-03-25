@@ -64,6 +64,13 @@ export async function initDb() {
     "ALTER TABLE inventory ADD COLUMN company  TEXT NOT NULL DEFAULT ''",
     "ALTER TABLE inventory ADD COLUMN sku      TEXT DEFAULT ''",
     "ALTER TABLE inventory ADD COLUMN category TEXT DEFAULT ''",
+    "ALTER TABLE sales     ADD COLUMN notes    TEXT DEFAULT ''",
+    // Indexes for performance
+    "CREATE INDEX IF NOT EXISTS idx_sales_date    ON sales(date DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_sales_payment ON sales(payment)",
+    "CREATE INDEX IF NOT EXISTS idx_sales_udhaar  ON sales(udhaar_paid) WHERE payment='udhaar'",
+    "CREATE INDEX IF NOT EXISTS idx_inv_name      ON inventory(name)",
+    "CREATE INDEX IF NOT EXISTS idx_inv_stock     ON inventory(stock)",
   ];
   for (const sql of migrations) {
     try { await db.execute(sql); } catch { /* column already exists */ }

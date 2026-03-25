@@ -30,6 +30,7 @@ export interface Sale {
   phone: string;
   date: string;
   udhaar_paid: 0 | 1;
+  notes: string;
 }
 
 export interface Return {
