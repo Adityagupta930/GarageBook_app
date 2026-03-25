@@ -130,7 +130,7 @@ export default function Dashboard() {
     const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }));
-    a.download = `GarageBook_${today}.csv`;
+    a.download = `PorwalAutoparts_${today}.csv`;
     a.click();
     toast('CSV download ho gaya!');
   }

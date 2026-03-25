@@ -328,7 +328,7 @@ export default function BillPage() {
       <div style="text-align:center">
         <span class="badge ${payment}">${payLabel}</span>
       </div>
-      <div class="footer">Thank you for your business! 🙏<br/>Powered by GarageBook</div>
+      <div class="footer">Thank you for your business! 🙏<br/>Powered by Porwal Autoparts</div>
     </div>
     ${withPrint ? '<script>window.onload=()=>window.print()<\/script>' : ''}
     </body></html>`;
