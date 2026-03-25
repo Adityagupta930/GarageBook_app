@@ -308,7 +308,10 @@ export default function Dashboard() {
                 <td style={{ fontWeight: 600 }}>{fmtCurrency(Number(s.amount))}</td>
                 <td><span className={`badge badge-${s.payment}`}>{s.payment === 'udhaar' ? 'Credit' : s.payment.charAt(0).toUpperCase() + s.payment.slice(1)}</span></td>
                 <td style={{ color: s.customer === 'Walk-in' ? 'var(--text3)' : 'var(--text)' }}>{s.customer}</td>
-                <td style={{ color: 'var(--text3)', fontSize: '12px' }}>{fmtDate(s.date)}</td>
+                <td style={{ color: 'var(--text3)', fontSize: '12px' }}>
+                  {fmtDate(s.date)}
+                  {s.notes && <span style={{ display: 'block', fontSize: '11px', color: 'var(--text3)', fontStyle: 'italic' }}>{s.notes}</span>}
+                </td>
               </tr>
             ))}
           </tbody>
