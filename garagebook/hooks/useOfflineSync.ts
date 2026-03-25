@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { toast } from '@/components/Toast';
 
 const KEY = 'gb_offline_queue';
@@ -25,6 +25,8 @@ export function enqueueOfflineSale(payload: Record<string, unknown>) {
 }
 
 export function useOfflineSync() {
+  const [pendingCount, setPendingCount] = useState(() => getQueue().length);
+
   const sync = useCallback(async () => {
     const q = getQueue();
     if (!q.length) return;
@@ -42,16 +44,16 @@ export function useOfflineSync() {
       }
     }
     saveQueue(failed);
+    setPendingCount(failed.length);
     const synced = q.length - failed.length;
     if (synced > 0) toast(`✅ ${synced} offline sale${synced > 1 ? 's' : ''} sync ho gaye!`);
   }, []);
 
   useEffect(() => {
     window.addEventListener('online', sync);
-    // Try sync on mount too (in case we're back online)
     if (navigator.onLine) sync();
     return () => window.removeEventListener('online', sync);
   }, [sync]);
 
-  return { pendingCount: getQueue().length };
+  return { pendingCount };
 }
