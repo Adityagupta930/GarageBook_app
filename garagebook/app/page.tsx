@@ -44,7 +44,13 @@ export default function Dashboard() {
     const onVisible = () => { if (document.visibilityState === 'visible') load(); };
     document.addEventListener('visibilitychange', onVisible);
     const unsync = listenSync(['sales', 'inventory'], load);
-    return () => { document.removeEventListener('visibilitychange', onVisible); unsync(); };
+    // Auto-refresh every 5 minutes
+    const timer = setInterval(load, 5 * 60 * 1000);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      unsync();
+      clearInterval(timer);
+    };
   }, [load]);
 
   const today = todayStr();
