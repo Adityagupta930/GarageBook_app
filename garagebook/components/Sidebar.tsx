@@ -40,7 +40,7 @@ export default function Sidebar({ onClose, isOwner }: Props) {
       </div>
 
       <nav className="sidebar-nav">
-        <div className="sidebar-section-label">Menu</div>
+        <div className="sidebar-section-label">Navigation</div>
         {visible.map(l => (
           <Link key={l.href} href={l.href}
             onClick={onClose}
@@ -49,7 +49,7 @@ export default function Sidebar({ onClose, isOwner }: Props) {
             <span className="icon">{l.icon}</span>
             <span style={{ flex: 1 }}>{t[l.labelKey]}</span>
             {shortcuts[l.href] && (
-              <span style={{ fontSize: '9px', color: '#484f58', fontFamily: 'monospace', letterSpacing: '.02em' }}>
+              <span style={{ fontSize: '9px', color: '#3d444d', fontFamily: 'monospace', background: 'rgba(255,255,255,.06)', padding: '1px 5px', borderRadius: '4px' }}>
                 {shortcuts[l.href]}
               </span>
             )}
