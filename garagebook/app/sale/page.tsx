@@ -71,7 +71,16 @@ export default function SalePage() {
   const filtered = inv
     .filter(i => i.stock > 0)
     .filter(i => !search || fuzzyMatch(i.name + ' ' + (i.company || '') + ' ' + (i.sku || ''), search))
-    .sort((a, b) => (freq[b.id] || 0) - (freq[a.id] || 0));
+    .sort((a, b) => {
+      if (!search) return (freq[b.id] || 0) - (freq[a.id] || 0);
+      const q = search.toLowerCase();
+      // Exact name match first
+      const aExact = a.name.toLowerCase().startsWith(q) ? 1 : 0;
+      const bExact = b.name.toLowerCase().startsWith(q) ? 1 : 0;
+      if (bExact !== aExact) return bExact - aExact;
+      // Then by frequency
+      return (freq[b.id] || 0) - (freq[a.id] || 0);
+    });
 
   function selectItem(item: InventoryItem) {
     setItemId(String(item.id));
@@ -221,7 +230,7 @@ export default function SalePage() {
               <div style={{ padding: '12px', fontSize: '13px', color: 'var(--text3)', textAlign: 'center' }}>
                 Koi part nahi mila
               </div>
-            ) : filtered.slice(0, 8).map(i => (
+            ) : filtered.slice(0, 10).map(i => (
               <div key={i.id}
                 onClick={() => selectItem(i)}
                 style={{
@@ -236,9 +245,12 @@ export default function SalePage() {
                   {freq[i.id] > 0 && <span style={{ fontSize: '10px', marginRight: '4px' }}>⭐</span>}
                   <b>{i.name}</b>
                   {i.company && <span style={{ color: 'var(--text3)', fontSize: '11px' }}> · {i.company}</span>}
+                  {i.sku && <span style={{ color: 'var(--text3)', fontSize: '10px', marginLeft: '4px', fontFamily: 'monospace' }}>#{i.sku}</span>}
                 </span>
-                <span style={{ fontSize: '12px', color: 'var(--text2)' }}>
-                  ₹{i.price} · <span style={{ color: i.stock <= 3 ? '#f97316' : '#16a34a' }}>{i.stock} left</span>
+                <span style={{ fontSize: '12px', color: 'var(--text2)', flexShrink: 0, marginLeft: '8px' }}>
+                  <b style={{ color: 'var(--text)' }}>₹{i.price}</b>
+                  {' · '}
+                  <span style={{ color: i.stock <= 3 ? '#f97316' : '#16a34a', fontWeight: 600 }}>{i.stock} left</span>
                 </span>
               </div>
             ))}
