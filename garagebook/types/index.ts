@@ -96,3 +96,22 @@ export interface BillItem {
 export interface BillWithItems extends Bill {
   items: BillItem[];
 }
+
+export interface Expense {
+  id: number;
+  title: string;
+  amount: number;
+  category: string;
+  note: string;
+  date: string;
+}
+
+export interface Supplier {
+  id: number;
+  name: string;
+  phone: string;
+  address: string;
+  company: string;
+  note: string;
+  created_at: string;
+}

@@ -81,6 +81,23 @@ export async function initDb() {
       buy_price REAL    NOT NULL DEFAULT 0,
       amount    REAL    NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS expenses (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      title      TEXT NOT NULL,
+      amount     REAL NOT NULL,
+      category   TEXT DEFAULT 'Other',
+      note       TEXT DEFAULT '',
+      date       TEXT DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS suppliers (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      name       TEXT NOT NULL,
+      phone      TEXT DEFAULT '',
+      address    TEXT DEFAULT '',
+      company    TEXT DEFAULT '',
+      note       TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now','localtime'))
+    );
   `);
   // Safe migrations
   const migrations = [
@@ -96,6 +113,9 @@ export async function initDb() {
     "CREATE INDEX IF NOT EXISTS idx_inv_stock     ON inventory(stock)",
     "CREATE INDEX IF NOT EXISTS idx_bills_date     ON bills(date DESC)",
     "CREATE INDEX IF NOT EXISTS idx_bill_items_bid ON bill_items(bill_id)",
+    "CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date DESC)",
+    "ALTER TABLE customers ADD COLUMN notes TEXT DEFAULT ''",
+    "ALTER TABLE customers ADD COLUMN total_purchases REAL DEFAULT 0",
   ];
   for (const sql of migrations) {
     try { await db.execute(sql); } catch { /* column already exists */ }
