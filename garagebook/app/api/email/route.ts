@@ -1,8 +1,5 @@
 import { NextRequest } from 'next/server';
-import { Resend } from 'resend';
 import { apiError, apiOk } from '@/lib/utils';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export interface BillEmailItem {
   item_name: string;
@@ -100,6 +97,9 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`;
 
+    if (!process.env.RESEND_API_KEY) return apiError('Email service configure nahi hai', 503);
+    const { Resend } = await import('resend');
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const { error } = await resend.emails.send({
       from: process.env.RESEND_FROM || 'GarageBook <onboarding@resend.dev>',
       to,
