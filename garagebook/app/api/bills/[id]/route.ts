@@ -10,7 +10,7 @@ export async function GET(_: NextRequest, { params }: Params) {
     const { data: bill, error } = await db.from('bills').select('*').eq('id', id).single();
     if (error || !bill) return apiError('Bill nahi mila', 404);
     const { data: items } = await db.from('bill_items').select('*').eq('bill_id', id);
-    return apiOk({ ...bill, items: items || [] });
+    return apiOk({ ...(bill as Record<string, unknown>), items: items || [] });
   } catch (e) {
     console.error('[GET /api/bills/:id]', e);
     return apiError('Bill fetch nahi hua', 500);
