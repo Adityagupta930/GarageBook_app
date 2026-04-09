@@ -21,7 +21,7 @@ export default function InventoryPage() {
   const [saving, setSaving]     = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; name: string } | null>(null);
   const [stockAdd, setStockAdd] = useState<StockAdd | null>(null);
-  const { isOwner } = useRole();
+  const { isOwner } = useAuth();
 
   const load = useCallback(async () => {
     setError('');
