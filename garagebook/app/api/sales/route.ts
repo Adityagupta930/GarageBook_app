@@ -10,19 +10,15 @@ export async function GET(req: NextRequest) {
     const payment = searchParams.get('payment');
     const limit   = searchParams.get('limit');
 
-    let sql = 'SELECT * FROM sales WHERE 1=1';
-    const args: (string | number)[] = [];
-    if (from)    { sql += ' AND date >= ?'; args.push(from); }
-    if (to)      { sql += ' AND date <= ?'; args.push(to + ' 23:59:59'); }
-    if (payment) { sql += ' AND payment = ?'; args.push(payment); }
-    sql += ' ORDER BY date DESC';
-    const defaultLimit = (!from && !to && !payment) ? 200 : 1000;
-    const finalLimit = (limit && !isNaN(+limit)) ? +limit : defaultLimit;
-    sql += ' LIMIT ?';
-    args.push(finalLimit);
+    let query = db.from('sales').select('*');
+    if (from)    query = query.gte('date', from);
+    if (to)      query = query.lte('date', to + 'T23:59:59');
+    if (payment) query = query.eq('payment', payment);
+    query = query.order('date', { ascending: false }).limit(+(limit || 200));
 
-    const result = await db.execute({ sql, args });
-    return apiOk(result.rows);
+    const { data, error } = await query;
+    if (error) throw error;
+    return apiOk(data);
   } catch (e) {
     console.error('[GET /api/sales]', e);
     return apiError('Sales fetch karne mein error', 500);
@@ -39,26 +35,27 @@ export async function POST(req: NextRequest) {
     if (!['cash', 'online', 'udhaar'].includes(payment)) return apiError('Payment type galat hai');
     if (payment === 'udhaar' && !customer?.trim()) return apiError('Credit ke liye customer naam zaroori');
 
-    const itemRes = await db.execute({ sql: 'SELECT * FROM inventory WHERE id = ?', args: [item_id] });
-    if (!itemRes.rows.length) return apiError('Part nahi mila', 404);
-    const item = itemRes.rows[0] as unknown as { id: number; stock: number; buy_price: number };
+    const { data: item, error: invErr } = await db.from('inventory').select('stock,buy_price').eq('id', item_id).single();
+    if (invErr || !item) return apiError('Part nahi mila', 404);
     if (Number(item.stock) < +qty) return apiError(`Sirf ${item.stock} stock bacha hai`);
 
-    const unitPrice = +amount / +qty;
-    const belowCost = unitPrice < Number(item.buy_price);
+    // Deduct stock
+    const { error: stockErr } = await db.from('inventory').update({ stock: item.stock - +qty }).eq('id', item_id);
+    if (stockErr) throw stockErr;
 
-    const result = await db.batch([
-      { sql: 'UPDATE inventory SET stock = stock - ? WHERE id = ?', args: [+qty, item_id] },
-      {
-        sql: `INSERT INTO sales (item_id, item_name, qty, amount, buy_price, payment, customer, phone, udhaar_paid, notes)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [item_id, item_name.trim(), +qty, +amount, item.buy_price, payment,
-               customer?.trim() || 'Walk-in', phone?.trim() || '',
-               payment !== 'udhaar' ? 1 : 0, notes?.trim() || ''],
-      },
-    ], 'write');
+    // Insert sale
+    const { data: sale, error: saleErr } = await db.from('sales').insert({
+      item_id, item_name: item_name.trim(), qty: +qty, amount: +amount,
+      buy_price: item.buy_price, payment,
+      customer: customer?.trim() || 'Walk-in',
+      phone: phone?.trim() || '',
+      udhaar_paid: payment !== 'udhaar',
+      notes: notes?.trim() || '',
+    }).select().single();
+    if (saleErr) throw saleErr;
 
-    return apiOk({ id: Number(result[1].lastInsertRowid), belowCost }, 201);
+    const belowCost = (+amount / +qty) < Number(item.buy_price);
+    return apiOk({ id: sale.id, belowCost }, 201);
   } catch (e) {
     console.error('[POST /api/sales]', e);
     return apiError('Sale save karne mein error', 500);
