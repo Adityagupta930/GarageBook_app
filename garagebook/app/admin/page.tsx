@@ -6,7 +6,7 @@ import { fmtDate, fmtCurrency, fuzzyMatch } from '@/lib/utils';
 import type { Customer, Return, ReportSummary, DailyReport, TopPart, Sale, Bill, BillWithItems } from '@/types';
 import { DailyBarChart, TopPartsChart } from '@/components/Charts';
 import ConfirmModal from '@/components/ConfirmModal';
-import { useRole } from '@/hooks/useRole';
+import { useAuth } from '@/hooks/useAuth';
 import { broadcast } from '@/lib/sync';
 import { getErrorLog, clearErrorLog } from '@/hooks/useErrorLogger';
 
