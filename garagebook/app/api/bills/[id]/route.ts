@@ -4,25 +4,24 @@ import { apiError, apiOk } from '@/lib/utils';
 
 type Params = { params: Promise<{ id: string }> };
 
-export async function GET(_req: NextRequest, { params }: Params) {
+export async function GET(_: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
-    const billRes = await db.execute({ sql: 'SELECT * FROM bills WHERE id = ?', args: [id] });
-    if (!billRes.rows.length) return apiError('Bill nahi mila', 404);
-
-    const itemsRes = await db.execute({ sql: 'SELECT * FROM bill_items WHERE bill_id = ?', args: [id] });
-    return apiOk({ ...billRes.rows[0], items: itemsRes.rows });
+    const { data: bill, error } = await db.from('bills').select('*').eq('id', id).single();
+    if (error || !bill) return apiError('Bill nahi mila', 404);
+    const { data: items } = await db.from('bill_items').select('*').eq('bill_id', id);
+    return apiOk({ ...bill, items: items || [] });
   } catch (e) {
     console.error('[GET /api/bills/:id]', e);
     return apiError('Bill fetch nahi hua', 500);
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: Params) {
+export async function DELETE(_: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
-    const info = await db.execute({ sql: 'DELETE FROM bills WHERE id = ?', args: [id] });
-    if (info.rowsAffected === 0) return apiError('Bill nahi mila', 404);
+    const { error } = await db.from('bills').delete().eq('id', id);
+    if (error) throw error;
     return apiOk({ success: true });
   } catch (e) {
     console.error('[DELETE /api/bills/:id]', e);
