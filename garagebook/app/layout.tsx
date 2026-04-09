@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import ShellClient from '@/components/ShellClient';
 import ToastContainer from '@/components/Toast';
 import SwRegister from '@/components/SwRegister';
 import { LangProvider } from '@/hooks/useLang';
