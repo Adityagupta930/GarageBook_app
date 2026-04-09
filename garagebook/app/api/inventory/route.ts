@@ -7,14 +7,16 @@ export async function GET(req: NextRequest) {
     const search   = req.nextUrl.searchParams.get('search');
     const category = req.nextUrl.searchParams.get('category');
     const instock  = req.nextUrl.searchParams.get('instock');
-    let sql  = 'SELECT * FROM inventory WHERE 1=1';
-    const args: string[] = [];
-    if (search)   { sql += ' AND LOWER(name) LIKE ?'; args.push(`%${search.toLowerCase()}%`); }
-    if (category) { sql += ' AND category = ?'; args.push(category); }
-    if (instock)  { sql += ' AND stock > 0'; }
-    sql += ' ORDER BY name';
-    const result = await db.execute({ sql, args });
-    return apiOk(result.rows);
+
+    let query = db.from('inventory').select('*');
+    if (search)   query = query.ilike('name', `%${search}%`);
+    if (category) query = query.eq('category', category);
+    if (instock)  query = query.gt('stock', 0);
+    query = query.order('name');
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return apiOk(data);
   } catch (e) {
     console.error('[GET /api/inventory]', e);
     return apiError('Failed to fetch inventory', 500);
@@ -29,19 +31,25 @@ export async function POST(req: NextRequest) {
     if (price == null || isNaN(+price) || +price < 0) return apiError('Valid selling price daalo');
     if (buy_price == null || isNaN(+buy_price) || +buy_price < 0) return apiError('Valid buy price daalo');
 
-    const exists = await db.execute({ sql: 'SELECT id FROM inventory WHERE LOWER(name) = LOWER(?) AND LOWER(COALESCE(company,\'\')) = LOWER(?)', args: [name.trim(), company?.trim() || ''] });
-    if (exists.rows.length) return apiError(company?.trim() ? `"${name.trim()}" (${company.trim()}) pehle se exist karta hai` : `"${name.trim()}" pehle se exist karta hai`, 409);
+    // Check duplicate
+    const { data: exists } = await db.from('inventory')
+      .select('id')
+      .ilike('name', name.trim())
+      .ilike('company', company?.trim() || '')
+      .maybeSingle();
+    if (exists) return apiError(`"${name.trim()}" pehle se exist karta hai`, 409);
 
     if (sku?.trim()) {
-      const skuExists = await db.execute({ sql: 'SELECT id FROM inventory WHERE sku = ?', args: [sku.trim()] });
-      if (skuExists.rows.length) return apiError('Ye SKU pehle se use ho raha hai', 409);
+      const { data: skuExists } = await db.from('inventory').select('id').eq('sku', sku.trim()).maybeSingle();
+      if (skuExists) return apiError('Ye SKU pehle se use ho raha hai', 409);
     }
 
-    const result = await db.execute({
-      sql: 'INSERT INTO inventory (name, sku, category, stock, price, buy_price, company) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      args: [name.trim(), sku?.trim() || '', category?.trim() || '', +stock, +price, +buy_price, company?.trim() || ''],
-    });
-    return apiOk({ id: Number(result.lastInsertRowid), name: name.trim(), sku: sku?.trim() || '', category: category?.trim() || '', stock: +stock, price: +price, buy_price: +buy_price, company: company?.trim() || '' }, 201);
+    const { data, error } = await db.from('inventory').insert({
+      name: name.trim(), sku: sku?.trim() || '', category: category?.trim() || '',
+      stock: +stock, price: +price, buy_price: +buy_price, company: company?.trim() || '',
+    }).select().single();
+    if (error) throw error;
+    return apiOk(data, 201);
   } catch (e) {
     console.error('[POST /api/inventory]', e);
     return apiError('Part add karne mein error', 500);
