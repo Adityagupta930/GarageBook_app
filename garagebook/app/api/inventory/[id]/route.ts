@@ -12,25 +12,27 @@ export async function PUT(req: NextRequest, { params }: Params) {
     if (body.action === 'addstock') {
       const qty = Number(body.qty);
       if (!qty || qty <= 0) return apiError('Valid qty daalo');
-      await db.execute({ sql: 'UPDATE inventory SET stock = stock + ? WHERE id = ?', args: [qty, id] });
-      const r = await db.execute({ sql: 'SELECT * FROM inventory WHERE id = ?', args: [id] });
-      return apiOk(r.rows[0]);
+      const { data: cur } = await db.from('inventory').select('stock').eq('id', id).single();
+      if (!cur) return apiError('Part nahi mila', 404);
+      const { data, error } = await db.from('inventory')
+        .update({ stock: cur.stock + qty })
+        .eq('id', id).select().single();
+      if (error) throw error;
+      return apiOk(data);
     }
 
     const { stock, price, buy_price, company, sku, category } = body;
     if (stock == null || isNaN(+stock)) return apiError('Valid stock daalo');
 
-    const fields: string[] = ['stock = ?'];
-    const args: (string | number)[] = [+stock];
-    if (price     != null && !isNaN(+price))     { fields.push('price = ?');     args.push(+price); }
-    if (buy_price != null && !isNaN(+buy_price)) { fields.push('buy_price = ?'); args.push(+buy_price); }
-    if (company   != null) { fields.push('company = ?');  args.push(company.trim()); }
-    if (sku       != null) { fields.push('sku = ?');      args.push(sku.trim()); }
-    if (category  != null) { fields.push('category = ?'); args.push(category.trim()); }
-    args.push(id);
+    const updates: Record<string, unknown> = { stock: +stock };
+    if (price     != null && !isNaN(+price))     updates.price     = +price;
+    if (buy_price != null && !isNaN(+buy_price)) updates.buy_price = +buy_price;
+    if (company   != null) updates.company  = company.trim();
+    if (sku       != null) updates.sku      = sku.trim();
+    if (category  != null) updates.category = category.trim();
 
-    const info = await db.execute({ sql: `UPDATE inventory SET ${fields.join(', ')} WHERE id = ?`, args });
-    if (info.rowsAffected === 0) return apiError('Part nahi mila', 404);
+    const { error } = await db.from('inventory').update(updates).eq('id', id);
+    if (error) throw error;
     return apiOk({ success: true });
   } catch (e) {
     console.error('[PUT /api/inventory/:id]', e);
@@ -38,11 +40,11 @@ export async function PUT(req: NextRequest, { params }: Params) {
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: Params) {
+export async function DELETE(_: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
-    const info = await db.execute({ sql: 'DELETE FROM inventory WHERE id = ?', args: [id] });
-    if (info.rowsAffected === 0) return apiError('Part nahi mila', 404);
+    const { error } = await db.from('inventory').delete().eq('id', id);
+    if (error) throw error;
     return apiOk({ success: true });
   } catch (e) {
     console.error('[DELETE /api/inventory/:id]', e);
