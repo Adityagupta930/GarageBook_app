@@ -22,7 +22,8 @@ export default function BillPage() {
   const [qty, setQty]           = useState('1');
   const [customer, setCustomer] = useState('');
   const [phone, setPhone]       = useState('');
-  const [payment, setPayment]   = useState<'cash' | 'online' | 'udhaar'>('cash');
+  const [payment, setPayment]     = useState<'cash' | 'online' | 'udhaar'>('cash');
+  const [splitOnline, setSplitOnline] = useState('');  // split payment: online portion
   const [discount, setDiscount]     = useState('0');
   const [partialPaid, setPartialPaid] = useState('');
   const [shopName, setShopName] = useState('Porwal Autoparts');
@@ -83,6 +84,8 @@ export default function BillPage() {
   const subtotal    = items.reduce((s, i) => s + i.qty * i.price, 0);
   const discountAmt = Math.min(+discount || 0, subtotal);
   const total       = Math.max(0, subtotal - discountAmt);
+  const splitOnlineAmt = payment === 'split' ? Math.min(+splitOnline || 0, total) : 0;
+  const splitCashAmt   = payment === 'split' ? Math.max(0, total - splitOnlineAmt) : 0;
 
   async function saveBill() {
     if (!items.length) return toast('Bill mein koi item nahi!', 'error');
@@ -90,10 +93,11 @@ export default function BillPage() {
     setSaving(true);
     try {
       const paidAmt = partialPaid !== '' ? Math.min(+partialPaid, total) : total;
+      const effectivePayment = payment === 'split' ? 'cash' : payment;
       const payload = {
         customer: customer.trim() || 'Walk-in',
         phone: phone.trim(),
-        payment,
+        payment: effectivePayment,
         subtotal,
         discount: discountAmt,
         total,
@@ -120,7 +124,7 @@ export default function BillPage() {
       toast(`✅ Bill #${data.bill_no} save ho gaya!`);
       broadcast('sales');
       broadcast('inventory');
-      setItems([]); setCustomer(''); setPhone(''); setPayment('cash'); setDiscount('0'); setPartialPaid('');
+      setItems([]); setCustomer(''); setPhone(''); setPayment('cash'); setDiscount('0'); setPartialPaid(''); setSplitOnline('');
       await loadInv();
     } catch (e: unknown) {
       toast(e instanceof Error ? e.message : 'Bill save nahi hua', 'error');
@@ -421,11 +425,20 @@ export default function BillPage() {
             required={payment === 'udhaar'}
           />
           <input className="gb-input" placeholder="Phone (optional)" value={phone} onChange={e => setPhone(e.target.value)} />
-          <select className="gb-input" value={payment} onChange={e => setPayment(e.target.value as typeof payment)}>
+          <select className="gb-input" value={payment} onChange={e => { setPayment(e.target.value as typeof payment); setSplitOnline(''); }}>
             <option value="cash">💵 Cash</option>
             <option value="online">📱 Online</option>
             <option value="udhaar">📋 Credit</option>
+            <option value="split">💳 Split (Cash+Online)</option>
           </select>
+          {payment === 'split' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+              <span style={{ color: 'var(--text2)' }}>Online ₹:</span>
+              <input className="gb-input w-28" type="number" min="0" max={total}
+                placeholder="0" value={splitOnline} onChange={e => setSplitOnline(e.target.value)} />
+              {splitOnlineAmt > 0 && <span style={{ color: 'var(--text2)', fontSize: '12px' }}>Cash: ₹{splitCashAmt.toFixed(0)}</span>}
+            </div>
+          )}
         </div>
       </div>
 
