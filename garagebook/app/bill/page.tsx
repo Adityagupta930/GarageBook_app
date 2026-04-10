@@ -9,6 +9,7 @@ import CustomerAutocomplete from '@/components/CustomerAutocomplete';
 import type { InventoryItem } from '@/types';
 
 interface BillItem { item_id: number; item_name: string; qty: number; price: number; }
+type PrintMode = 'a4' | 'thermal';
 
 const EMAIL_KEY = 'gb_last_email';
 
@@ -22,7 +23,8 @@ export default function BillPage() {
   const [customer, setCustomer] = useState('');
   const [phone, setPhone]       = useState('');
   const [payment, setPayment]   = useState<'cash' | 'online' | 'udhaar'>('cash');
-  const [discount, setDiscount] = useState('0');
+  const [discount, setDiscount]     = useState('0');
+  const [partialPaid, setPartialPaid] = useState('');
   const [shopName, setShopName] = useState('Porwal Autoparts');
   const [saving, setSaving]       = useState(false);
   const [emailTo, setEmailTo]     = useState('');
@@ -87,6 +89,7 @@ export default function BillPage() {
     if (payment === 'udhaar' && !customer.trim()) return toast('Credit ke liye customer naam zaroori!', 'error');
     setSaving(true);
     try {
+      const paidAmt = partialPaid !== '' ? Math.min(+partialPaid, total) : total;
       const payload = {
         customer: customer.trim() || 'Walk-in',
         phone: phone.trim(),
@@ -94,6 +97,7 @@ export default function BillPage() {
         subtotal,
         discount: discountAmt,
         total,
+        partial_paid: paidAmt,
         operator,
         notes: '',
         items: items.map(i => ({
@@ -116,7 +120,7 @@ export default function BillPage() {
       toast(`✅ Bill #${data.bill_no} save ho gaya!`);
       broadcast('sales');
       broadcast('inventory');
-      setItems([]); setCustomer(''); setPhone(''); setPayment('cash'); setDiscount('0');
+      setItems([]); setCustomer(''); setPhone(''); setPayment('cash'); setDiscount('0'); setPartialPaid('');
       await loadInv();
     } catch (e: unknown) {
       toast(e instanceof Error ? e.message : 'Bill save nahi hua', 'error');
@@ -277,17 +281,56 @@ export default function BillPage() {
     window.open(`https://wa.me/${intlNum}?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
-  function printBill() {
+  function printBill(mode: PrintMode = 'a4') {
     if (!items.length) return toast('Bill mein koi item nahi!', 'error');
     const win = window.open('', '_blank');
     if (!win) return;
-    win.document.write(getBillHTML(true));
+    win.document.write(mode === 'thermal' ? getThermalHTML() : getBillHTML(true));
     win.document.close();
   }
 
+  function getThermalHTML() {
+    const dateStr  = fmtDate(new Date().toISOString());
+    const payLabel = payment === 'cash' ? 'Cash' : payment === 'online' ? 'Online' : 'Credit';
+    const paidAmt  = partialPaid !== '' ? Math.min(+partialPaid, total) : total;
+    const balance  = Math.max(0, total - paidAmt);
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Bill</title>
+    <style>
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{font-family:'Courier New',monospace;width:58mm;font-size:11px;padding:4px}
+      .center{text-align:center} .bold{font-weight:700} .line{border-top:1px dashed #000;margin:4px 0}
+      table{width:100%;border-collapse:collapse} td{padding:1px 0;font-size:10px}
+      td:last-child{text-align:right} .total-row td{font-weight:700;font-size:12px;border-top:1px solid #000;padding-top:3px}
+      @media print{@page{margin:0;width:58mm}}
+    </style></head><body>
+    <div class="center bold" style="font-size:13px">${shopName}</div>
+    <div class="center" style="font-size:9px">Auto Parts & Garage</div>
+    <div class="line"></div>
+    <div>Date: ${dateStr}</div>
+    ${customer ? `<div>Customer: ${customer}</div>` : ''}
+    ${phone ? `<div>Phone: ${phone}</div>` : ''}
+    <div class="line"></div>
+    <table>
+      <tr><td><b>Item</b></td><td><b>Qty</b></td><td><b>Amt</b></td></tr>
+      ${items.map(i => `<tr><td>${i.item_name}</td><td>${i.qty}</td><td>₹${(i.qty * i.price).toFixed(0)}</td></tr>`).join('')}
+    </table>
+    <div class="line"></div>
+    ${discountAmt > 0 ? `<table><tr><td>Subtotal</td><td>₹${subtotal.toFixed(0)}</td></tr><tr><td>Discount</td><td>-₹${discountAmt.toFixed(0)}</td></tr></table>` : ''}
+    <table><tr class="total-row"><td>TOTAL</td><td>₹${total.toFixed(0)}</td></tr>
+    ${balance > 0 ? `<tr><td>Paid</td><td>₹${paidAmt.toFixed(0)}</td></tr><tr><td><b>Balance</b></td><td><b>₹${balance.toFixed(0)}</b></td></tr>` : ''}
+    </table>
+    <div class="line"></div>
+    <div>Payment: ${payLabel}</div>
+    <div class="center" style="margin-top:6px;font-size:9px">Thank you! 🙏</div>
+    <script>window.onload=()=>window.print()<\/script>
+    </body></html>`;
+  }
+
   function getBillHTML(withPrint = false) {
-    const dateStr = fmtDate(new Date().toISOString());
+    const dateStr  = fmtDate(new Date().toISOString());
     const payLabel = payment === 'cash' ? 'Cash 💵' : payment === 'online' ? 'Online 📱' : 'Credit / Udhaar 📋';
+    const paidAmt  = partialPaid !== '' ? Math.min(+partialPaid, total) : total;
+    const balance  = Math.max(0, total - paidAmt);
     return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Bill</title>
     <style>
       *{margin:0;padding:0;box-sizing:border-box}
@@ -343,6 +386,7 @@ export default function BillPage() {
       <div style="text-align:center">
         <span class="badge ${payment}">${payLabel}</span>
       </div>
+      ${balance > 0 ? `<div style="margin-top:10px;padding:8px 12px;background:#fff3e0;border-radius:8px;font-size:13px"><b>Advance Paid:</b> ₹${paidAmt.toFixed(2)} &nbsp;|&nbsp; <b style="color:#e65100">Balance Due: ₹${balance.toFixed(2)}</b></div>` : ''}
       <div class="footer">Thank you for your business! 🙏<br/>Powered by Porwal Autoparts</div>
     </div>
     ${withPrint ? '<script>window.onload=()=>window.print()<\/script>' : ''}
@@ -423,7 +467,7 @@ export default function BillPage() {
             </tbody>
           </table>
 
-          {/* Discount + Total */}
+          {/* Discount + Partial Payment + Total */}
           <div className="flex items-center gap-3 mb-4 flex-wrap">
             <span className="text-sm text-gray-600">Subtotal: <b>₹{subtotal.toFixed(2)}</b></span>
             <div className="flex items-center gap-2">
@@ -431,14 +475,26 @@ export default function BillPage() {
               <input className="gb-input w-28" type="number" min="0" max={subtotal}
                 value={discount} onChange={e => setDiscount(e.target.value)} />
             </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">Advance ₹:</label>
+              <input className="gb-input w-28" type="number" min="0" max={total}
+                placeholder={`Full: ₹${total.toFixed(0)}`}
+                value={partialPaid} onChange={e => setPartialPaid(e.target.value)} />
+            </div>
             <span className="text-lg font-bold text-green-700 ml-auto">Total: ₹{total.toFixed(2)}</span>
+            {partialPaid !== '' && +partialPaid < total && (
+              <span style={{ fontSize: '13px', color: '#e65100', fontWeight: 600 }}>
+                Balance: ₹{Math.max(0, total - +partialPaid).toFixed(2)}
+              </span>
+            )}
           </div>
 
           <div className="flex gap-2 flex-wrap">
             <button className="btn" onClick={saveBill} disabled={saving}>
               {saving ? '⏳ Saving...' : '💾 Save Bill'}
             </button>
-            <button className="btn-green" onClick={printBill}>🖨️ Print / PDF</button>
+            <button className="btn-green" onClick={() => printBill('a4')}>🖨️ Print A4</button>
+            <button className="btn-green" onClick={() => printBill('thermal')} style={{ background: '#0891b2' }}>🧾 Thermal 58mm</button>
             <button className="btn-blue" onClick={saveBillImage} disabled={imgLoading}>
               {imgLoading ? '⏳...' : '📸 Image Save'}
             </button>

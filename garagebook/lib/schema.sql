@@ -48,17 +48,19 @@ create table if not exists returns (
 );
 
 create table if not exists bills (
-  id         bigserial primary key,
-  bill_no    text not null unique,
-  customer   text default 'Walk-in',
-  phone      text default '',
-  payment    text not null default 'cash',
-  subtotal   numeric not null default 0,
-  discount   numeric not null default 0,
-  total      numeric not null default 0,
-  operator   text default '',
-  notes      text default '',
-  date       timestamptz default now()
+  id           bigserial primary key,
+  bill_no      text not null unique,
+  customer     text default 'Walk-in',
+  phone        text default '',
+  payment      text not null default 'cash',
+  subtotal     numeric not null default 0,
+  discount     numeric not null default 0,
+  total        numeric not null default 0,
+  partial_paid numeric not null default 0,
+  balance      numeric not null default 0,
+  operator     text default '',
+  notes        text default '',
+  date         timestamptz default now()
 );
 
 create table if not exists bill_items (
