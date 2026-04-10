@@ -13,6 +13,77 @@ import type { Sale, InventoryItem } from '@/types';
 
 type Range = 'today' | 'week' | 'month';
 
+// ── Employee Dashboard ─────────────────────────────────────────
+function EmployeeDashboard({ sales, loading, error }: { sales: Sale[]; loading: boolean; error: string }) {
+  const today = todayStr();
+  const todaySales = sales.filter(s => s.date.startsWith(today));
+  const todayIncome = todaySales.filter(s => s.payment !== 'udhaar').reduce((a, s) => a + Number(s.amount), 0);
+  const todayCount  = todaySales.length;
+
+  return (
+    <div>
+      {/* Welcome */}
+      <div style={{ background: 'linear-gradient(135deg,#e94560,#c73652)', borderRadius: '14px', padding: '20px 24px', marginBottom: '20px', color: '#fff' }}>
+        <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px' }}>👋 Namaste!</div>
+        <div style={{ fontSize: '13px', opacity: .85 }}>Aaj ki bikri shuru karo — Porwal Autoparts</div>
+      </div>
+
+      {/* Quick Actions */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
+        {[
+          { href: '/sale', icon: '🛒', label: 'New Sale', bg: '#e94560' },
+          { href: '/bill', icon: '🧾', label: 'Make Bill', bg: '#7c3aed' },
+        ].map(a => (
+          <a key={a.href} href={a.href} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            padding: '14px', borderRadius: '10px', background: a.bg,
+            color: '#fff', fontSize: '15px', fontWeight: 700, textDecoration: 'none',
+          }}>
+            {a.icon} {a.label}
+          </a>
+        ))}
+      </div>
+
+      {/* Today Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text2)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em' }}>💰 Aaj ki Kamai</div>
+          <div style={{ fontSize: '24px', fontWeight: 800, color: '#16a34a', marginTop: '6px' }}>{fmtCurrency(todayIncome)}</div>
+        </div>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text2)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em' }}>🛒 Aaj ki Sales</div>
+          <div style={{ fontSize: '24px', fontWeight: 800, color: '#2563eb', marginTop: '6px' }}>{todayCount}</div>
+        </div>
+      </div>
+
+      {/* Today's sales table */}
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: '13px', fontWeight: 600 }}>📋 Aaj ki Bikri</div>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="gb-table">
+            <thead><tr><th>Part</th><th>Qty</th><th>Amount</th><th>Payment</th><th>Customer</th></tr></thead>
+            <tbody>
+              {loading ? <LoadingRows cols={5} /> :
+               error   ? <ErrorRow cols={5} msg={error} /> :
+               todaySales.length === 0 ? <EmptyRow cols={5} msg="Aaj koi sale nahi abhi tak" /> :
+               todaySales.map(s => (
+                <tr key={s.id}>
+                  <td style={{ fontWeight: 500 }}>{s.item_name}</td>
+                  <td>{s.qty}</td>
+                  <td style={{ fontWeight: 600 }}>{fmtCurrency(Number(s.amount))}</td>
+                  <td><span className={`badge badge-${s.payment}`}>{s.payment === 'udhaar' ? 'Credit' : s.payment}</span></td>
+                  <td style={{ color: s.customer === 'Walk-in' ? 'var(--text3)' : 'var(--text)' }}>{s.customer}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Owner Dashboard ─────────────────────────────────────────────
 export default function Dashboard() {
   const [sales, setSales]     = useState<Sale[]>([]);
   const [inv, setInv]         = useState<InventoryItem[]>([]);
@@ -121,6 +192,8 @@ export default function Dashboard() {
       .reduce((a, s) => a + Number(s.amount), 0);
   })();
   const vsYesterday = yesterday > 0 ? ((income - yesterday) / yesterday * 100) : null;
+
+  if (!isOwner) return <EmployeeDashboard sales={sales} loading={loading} error={error} />;
 
   function exportCSV() {
     if (!sales.length) return toast('Koi data nahi', 'info');
