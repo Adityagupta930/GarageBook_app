@@ -24,6 +24,7 @@ export default function SalePage() {
   const [recentSales, setRecentSales] = useState<{item_name:string; qty:number; amount:number; payment:string}[]>([]);
   const [search, setSearch]     = useState('');
   const [showDrop, setShowDrop] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(-1);
   const [itemId, setItemId]     = useState('');
   const [qty, setQty]           = useState('1');
   const [price, setPrice]       = useState('');
@@ -88,6 +89,14 @@ export default function SalePage() {
     setSearch(item.name + (item.company ? ` (${item.company})` : ''));
     setDiscount('0');
     setShowDrop(false);
+    setActiveIdx(-1);
+  }
+
+  function highlightMatch(text: string, query: string) {
+    if (!query) return text;
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return text;
+    return <>{text.slice(0, idx)}<mark style={{ background: '#fef08a', color: '#111', borderRadius: '2px', padding: '0 1px' }}>{text.slice(idx, idx + query.length)}</mark>{text.slice(idx + query.length)}</>;
   }
 
   function reset() {
@@ -215,8 +224,15 @@ export default function SalePage() {
           className="gb-input w-full"
           placeholder="🔍 Part search karo (naam, SKU, company)..."
           value={search}
-          onChange={e => { setSearch(e.target.value); setShowDrop(true); setItemId(''); setPrice(''); }}
+          onChange={e => { setSearch(e.target.value); setShowDrop(true); setItemId(''); setPrice(''); setActiveIdx(-1); }}
           onFocus={() => setShowDrop(true)}
+          onKeyDown={e => {
+            const list = filtered.slice(0, 10);
+            if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIdx(i => Math.min(i + 1, list.length - 1)); }
+            if (e.key === 'ArrowUp')   { e.preventDefault(); setActiveIdx(i => Math.max(i - 1, 0)); }
+            if (e.key === 'Enter' && activeIdx >= 0) { e.preventDefault(); selectItem(list[activeIdx]); }
+            if (e.key === 'Escape') setShowDrop(false);
+          }}
           autoComplete="off"
         />
         {showDrop && search && (
@@ -224,34 +240,43 @@ export default function SalePage() {
             position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
             background: 'var(--surface)', border: '1px solid var(--border)',
             borderRadius: '8px', boxShadow: 'var(--shadow-md)',
-            maxHeight: '220px', overflowY: 'auto', marginTop: '4px',
+            maxHeight: '280px', overflowY: 'auto', marginTop: '4px',
           }}>
+            <div style={{ padding: '6px 14px', borderBottom: '1px solid var(--border)', fontSize: '10px', color: 'var(--text3)', display: 'flex', gap: '12px' }}>
+              <span>↑↓ Navigate</span><span>Enter Select</span><span>Esc Close</span>
+              <span style={{ marginLeft: 'auto' }}>{filtered.length} results</span>
+            </div>
             {filtered.length === 0 ? (
               <div style={{ padding: '12px', fontSize: '13px', color: 'var(--text3)', textAlign: 'center' }}>
                 Koi part nahi mila
               </div>
-            ) : filtered.slice(0, 10).map(i => (
+            ) : filtered.slice(0, 10).map((i, idx) => (
               <div key={i.id}
                 onClick={() => selectItem(i)}
+                onMouseEnter={() => setActiveIdx(idx)}
                 style={{
-                  padding: '9px 14px', cursor: 'pointer', fontSize: '13px',
+                  padding: '10px 14px', cursor: 'pointer', fontSize: '13px',
                   borderBottom: '1px solid var(--border)',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  background: activeIdx === idx ? 'var(--surface2)' : 'transparent',
+                  transition: 'background .1s',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface2)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
-                <span>
-                  {freq[i.id] > 0 && <span style={{ fontSize: '10px', marginRight: '4px' }}>⭐</span>}
-                  <b>{i.name}</b>
-                  {i.company && <span style={{ color: 'var(--text3)', fontSize: '11px' }}> · {i.company}</span>}
-                  {i.sku && <span style={{ color: 'var(--text3)', fontSize: '10px', marginLeft: '4px', fontFamily: 'monospace' }}>#{i.sku}</span>}
-                </span>
-                <span style={{ fontSize: '12px', color: 'var(--text2)', flexShrink: 0, marginLeft: '8px' }}>
-                  <b style={{ color: 'var(--text)' }}>₹{i.price}</b>
-                  {' · '}
-                  <span style={{ color: i.stock <= 3 ? '#f97316' : '#16a34a', fontWeight: 600 }}>{i.stock} left</span>
-                </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <span style={{ fontWeight: 600 }}>
+                    {freq[i.id] > 0 && <span style={{ fontSize: '10px', marginRight: '4px' }}>⭐</span>}
+                    {highlightMatch(i.name, search)}
+                    {i.company && <span style={{ color: 'var(--text3)', fontSize: '11px', fontWeight: 400 }}> · {i.company}</span>}
+                  </span>
+                  <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '14px' }}>₹{i.price}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {i.sku && <span style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'monospace', background: 'var(--surface2)', padding: '1px 5px', borderRadius: '3px' }}>#{i.sku}</span>}
+                  {i.category && <span style={{ fontSize: '10px', color: '#2563eb', background: 'rgba(37,99,235,.1)', padding: '1px 6px', borderRadius: '10px' }}>{i.category}</span>}
+                  <div style={{ flex: 1, height: '4px', background: 'var(--surface2)', borderRadius: '99px', overflow: 'hidden', maxWidth: '80px' }}>
+                    <div style={{ height: '100%', borderRadius: '99px', width: `${Math.min(100, (i.stock / 20) * 100)}%`, background: i.stock <= 3 ? '#ef4444' : i.stock <= 10 ? '#f97316' : '#16a34a' }} />
+                  </div>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: i.stock <= 3 ? '#ef4444' : i.stock <= 10 ? '#f97316' : '#16a34a' }}>{i.stock} left</span>
+                </div>
               </div>
             ))}
           </div>
