@@ -23,15 +23,15 @@ const shortcuts: Record<string, string> = {
   '/bill': 'Ctrl+B', '/history': 'Ctrl+H',
 };
 
-interface Props { onClose?: () => void; isOwner: boolean; }
+interface Props { onClose?: () => void; isOwner: boolean; open?: boolean; }
 
-export default function Sidebar({ onClose, isOwner }: Props) {
+export default function Sidebar({ onClose, isOwner, open }: Props) {
   const path    = usePathname();
   const { t }   = useLang();
   const visible = links.filter(l => isOwner || !l.ownerOnly);
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${open ? ' open' : ''}`}>
       <div className="sidebar-logo">
         <div className="logo-row">
           <div className="logo-icon">🔧</div>

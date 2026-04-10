@@ -62,7 +62,7 @@ export default function ShellClient({ children }: { children: React.ReactNode })
   return (
     <div className="app-shell">
       <div className={`sidebar-overlay ${open ? 'open' : ''}`} onClick={() => setOpen(false)} />
-      <Sidebar onClose={() => setOpen(false)} isOwner={isOwner} />
+      <Sidebar onClose={() => setOpen(false)} isOwner={isOwner} open={open} />
       <div className="main-area">
         <Topbar
           onMenuClick={() => setOpen(o => !o)}

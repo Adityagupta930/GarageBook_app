@@ -186,27 +186,44 @@ a { text-decoration: none; color: inherit; }
 .page-content { padding: 24px; flex: 1; animation: fade-up .2s ease; }
 
 /* ── Mobile ────────────────────────────────────────────────────── */
-.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 49; backdrop-filter: blur(3px); }
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.65);
+  z-index: 49;
+  backdrop-filter: blur(3px);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
 @media (max-width: 768px) {
-  .sidebar              { transform: translateX(-100%); }
-  .sidebar.open         { transform: translateX(0); }
-  .sidebar-overlay.open { display: block; }
+  .sidebar {
+    transform: translateX(-100%);
+    /* Mobile pe sidebar upar sab kuch ke upar */
+    z-index: 100;
+  }
+  .sidebar.open         { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,.5); }
+  .sidebar-overlay.open { display: block; z-index: 99; }
   .main-area            { margin-left: 0; }
-  .topbar               { padding: 0 16px; }
+  .topbar               { padding: 0 16px; z-index: 40; }
   .page-content         { padding: 14px; }
   .hamburger            { display: flex !important; }
+  /* Mobile pe sidebar links bade touch targets */
+  .sidebar-link         { padding: 13px 12px; font-size: 14px; margin-bottom: 3px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  .sidebar-link .icon   { font-size: 18px; width: 24px; }
 }
 .hamburger {
   display: none;
   align-items: center; justify-content: center;
-  width: 36px; height: 36px;
+  width: 40px; height: 40px;
   border-radius: 8px;
   cursor: pointer;
   color: var(--text2);
   border: 1px solid var(--border);
   background: transparent;
-  font-size: 16px;
+  font-size: 18px;
   transition: all .15s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .hamburger:hover { background: var(--surface2); color: var(--text); }
 
