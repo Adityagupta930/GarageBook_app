@@ -22,10 +22,35 @@ const BOTTOM_NAV = [
 ];
 
 export default function ShellClient({ children }: { children: React.ReactNode }) {
-  const [open, setOpen]   = useState(false);
+  const [open, setOpen]       = useState(false);
+  const [desktopView, setDesktopView] = useState(false);
   const router            = useRouter();
   const pathname          = usePathname();
   const { user, loading, signOut, isOwner } = useAuth();
+
+  useEffect(() => {
+    const saved = localStorage.getItem('gb_view_mode');
+    const isDesktop = saved === 'desktop';
+    setDesktopView(isDesktop);
+    applyViewMode(isDesktop);
+  }, []);
+
+  function applyViewMode(desktop: boolean) {
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) return;
+    if (desktop) {
+      meta.setAttribute('content', 'width=1280');
+    } else {
+      meta.setAttribute('content', 'width=device-width, initial-scale=1.0, shrink-to-fit=no, viewport-fit=cover');
+    }
+  }
+
+  function toggleViewMode() {
+    const next = !desktopView;
+    setDesktopView(next);
+    localStorage.setItem('gb_view_mode', next ? 'desktop' : 'mobile');
+    applyViewMode(next);
+  }
 
   useEffect(() => {
     if (!loading && !user && !PUBLIC_PATHS.includes(pathname)) {
@@ -67,7 +92,7 @@ export default function ShellClient({ children }: { children: React.ReactNode })
   return (
     <div className="app-shell">
       <div className={`sidebar-overlay ${open ? 'open' : ''}`} onClick={() => setOpen(false)} />
-      <Sidebar onClose={() => setOpen(false)} isOwner={isOwner} open={open} />
+      <Sidebar onClose={() => setOpen(false)} isOwner={isOwner} open={open} desktopView={desktopView} onToggleView={toggleViewMode} />
       <div className="main-area">
         <Topbar
           onMenuClick={() => setOpen(o => !o)}

@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning className={inter.className}>
       <head>
         {/* ── Viewport — mobile ke liye sabse zaroori ── */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no, viewport-fit=cover" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0d1117" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
